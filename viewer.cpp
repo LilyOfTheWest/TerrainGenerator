@@ -54,30 +54,57 @@ void Viewer::deleteVAO() {
 
 void Viewer::deleteFBO() {
   // delete all FBO Ids
-  //glDeleteFramebuffers(1,&_fbo);
-  //glDeleteTextures(1,&_texDepth);
+  glDeleteFramebuffers(1,&_fbo[0]);
+  glDeleteFramebuffers(1, &_fbo[1]);
+  glDeleteTextures(1,&_texHeight);
+  glDeleteTextures(1, &_texNormal);
+  glDeleteTextures(1, &_texRendu);
 }
 
 void Viewer::createFBO() {
   // generate fbo and associated textures
     glGenFramebuffers(1, &_fbo[0]);
+    glGenFramebuffers(1, &_fbo[1]);
     glGenTextures(1,&_texHeight);
     glGenTextures(1, &_texNormal);
+    glGenTextures(1, &_texRendu);
 
     glBindTexture(GL_TEXTURE_2D, _texHeight);
-    glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,_grid->size(),_grid->size(),0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA32F,_grid->size(),_grid->size(),0,GL_RGBA,GL_FLOAT,NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+
+    glBindTexture(GL_TEXTURE_2D, _texNormal);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA32F,_grid->size(),_grid->size(),0,GL_RGBA,GL_FLOAT,NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glBindTexture(GL_TEXTURE_2D, _texRendu);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA32F,width(),height(),0,GL_RGBA,GL_FLOAT,NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
   // attach textures to framebuffer object 
     glBindFramebuffer(GL_FRAMEBUFFER,_fbo[0]);
     glBindTexture(GL_TEXTURE_2D,_texHeight);
-    glFramebufferTexture2D(GL_FRAMEBUFFER_EXT,GL_DEPTH_ATTACHMENT,GL_TEXTURE_2D,_texHeight,0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER_EXT,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,_texHeight,0);
+
+    glBindTexture(GL_TEXTURE_2D,_texNormal);
+    glFramebufferTexture2D(GL_FRAMEBUFFER_EXT,GL_COLOR_ATTACHMENT1,GL_TEXTURE_2D,_texNormal,0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, _fbo[1]);
+    glBindTexture(GL_TEXTURE_2D,_texRendu);
+    glFramebufferTexture2D(GL_FRAMEBUFFER_EXT,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,_texRendu,0);
+
 
   // test if everything is ok
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -157,25 +184,25 @@ void Viewer::createVAO() {
 
 void Viewer::createShaders() {
   _noiseShader = new Shader();
-//  _normalShader = new Shader();
+  _normalShader = new Shader();
 //  _postProcessShader = new Shader();
 //  _shadowMapShader = new Shader(); // will create the shadow map
-//  _renderingShader = new Shader(); // render the scene, use shadow map
+  _renderingShader = new Shader(); // render the scene, use shadow map
 
   _noiseShader->load("shaders/noise.vert", "shaders/noise.frag");
-//  _normalShader->load("shaders/normal.vert", "shaders/normal.frag");
+  _normalShader->load("shaders/normal.vert", "shaders/normal.frag");
 //  _postProcessShader->load("shaders/post-process.vert", "shaders/post-process.frag");
 //  _shadowMapShader->load("shaders/shadow-map.vert","shaders/shadow-map.frag");
-//  _renderingShader->load("shaders/rendering.vert","shaders/rendering.frag");
+  _renderingShader->load("shaders/rendering.vert","shaders/rendering.frag");
 }
 
 
 void Viewer::deleteShaders() {
   delete _noiseShader;  _noiseShader = NULL;
-//  delete _normalShader; _normalShader = NULL;
+  delete _normalShader; _normalShader = NULL;
 //  delete _postProcessShader;    _postProcessShader = NULL;
 //  delete _shadowMapShader; _shadowMapShader = NULL;
-//  delete _renderingShader; _renderingShader = NULL;
+  delete _renderingShader; _renderingShader = NULL;
 }
 
 void Viewer::drawSceneFromCamera(GLuint id) {
@@ -202,19 +229,79 @@ void Viewer::drawSceneFromCamera(GLuint id) {
   glBindVertexArray(0);
 }
 
-void Viewer::drawSceneFromLight(GLuint id) {
+void Viewer::drawTerrain(GLuint id) {
   // mdv matrix from the light point of view
-  const float size = sqrt(2*pow(_grid->size(),2))/2.0;
-  glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
-  glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
-  glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,1,0));
-  glm::mat4 m   = glm::mat4(1.0);
-  glm::mat4 mv  = v*m;
+//  const float size = sqrt(2*pow(_grid->size(),2))/2.0;
+//  glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
+//  glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
+//  glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,1,0));
+//  glm::mat4 m   = glm::mat4(1.0);
+//  glm::mat4 mv  = v*m;
 
-  const glm::mat4 mvpDepth = p*mv;
-  glUniformMatrix4fv(glGetUniformLocation(id,"mvpDepthMat"),1,GL_FALSE,&mvpDepth[0][0]);
+//  const glm::mat4 mvpDepth = p*mv;
+//  glUniformMatrix4fv(glGetUniformLocation(id,"mvpDepthMat"),1,GL_FALSE,&mvpDepth[0][0]);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D,_texHeight);
+  glUniform1i(glGetUniformLocation(id,"heightmap"),0);
+
+  glViewport(0, 0, _grid->size(),_grid->size());
+  glBindVertexArray(_vaoQuad);
+  glDrawArrays(GL_TRIANGLES,0,6);
+  glBindVertexArray(0);
+
   // disable VAO
   glBindVertexArray(0);
+}
+
+void Viewer::drawHeight(GLuint id) {
+  glViewport(0, 0, _grid->size(),_grid->size());
+  glBindVertexArray(_vaoQuad);
+  glDrawArrays(GL_TRIANGLES,0,6);
+  glBindVertexArray(0);
+
+  // disable VAO
+  glBindVertexArray(0);
+}
+
+void Viewer::drawRendu(GLuint id){
+    glViewport(0, 0, width(),height());
+
+    glBindVertexArray(_vaoTerrain);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D,_texHeight);
+    glUniform1i(glGetUniformLocation(id,"heightmap"),0);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D,_texNormal);
+    glUniform1i(glGetUniformLocation(id,"normalmap"),1);
+
+    // On a envoyé au shader, on unbind notre fbo
+   // glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // on bind le nouveau afin de dessiner dedans
+    //glBindFramebuffer(GL_FRAMEBUFFER, _fbo[1]);
+
+     //mdv matrix from the light point of view
+    const float size = sqrt(2*pow(_grid->size(),2))/2.0;
+    glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
+    glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
+    glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,1,0));
+    glm::mat4 m   = glm::mat4(1.0);
+    glm::mat4 mv  = v*m;
+
+    const glm::mat4 mvpDepth = p*mv;
+    glUniformMatrix4fv(glGetUniformLocation(id,"mvpDepthMat"),1,GL_FALSE,&mvpDepth[0][0]);
+
+    // send uniform variables
+    glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));
+    glUniformMatrix3fv(glGetUniformLocation(id,"normalMat"),1,GL_FALSE,&(_cam->normalMatrix()[0][0]));
+    glUniform3fv(glGetUniformLocation(id,"light"),1,&(_light[0]));
+
+    const glm::mat4 mdv = _cam->mdvMatrix();
+    glUniformMatrix4fv(glGetUniformLocation(id,"mdvMat"),1,GL_FALSE,&(mdv[0][0]));
+
+    glBindVertexArray(0);
 }
 
 void Viewer::drawShadowMap(GLuint id) {
@@ -232,37 +319,40 @@ void Viewer::drawShadowMap(GLuint id) {
 }
 
 void Viewer::paintGL() {
-  // *** TODO: compute the shadow map here ***
-  //glBindFramebuffer(GL_FRAMEBUFFER,_fbo[0]);
+  glBindFramebuffer(GL_FRAMEBUFFER,_fbo[0]);
 
-  //glDrawBuffer(GL_NONE);
+  glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT);
 
   glUseProgram(_noiseShader->id());
 
-  glViewport(0, 0, _grid->size(),_grid->size());
-  glBindVertexArray(_vaoQuad);
-    glDrawArrays(GL_TRIANGLES,0,6);
+  drawHeight(_noiseShader->id());
 
-    glBindVertexArray(0);
-  //drawSceneFromLight(_noiseShader->id());
+//  glBindFramebuffer(GL_FRAMEBUFFER, _fbo[0]);
 
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  // Normal
+  // Pour tester l'affichage, décommentez ça
+  //glBindFramebuffer(GL_FRAMEBUFFER,0);
 
-  // back to the screen viewport
-//  glViewport(0,0,width(),height());
+  // et Commenter ça
+  glDrawBuffer(GL_COLOR_ATTACHMENT1);
 
-  // activate the rendering shader 
-//  glUseProgram(_renderingShader->id());
+  glUseProgram(_normalShader->id());
 
-  // clear buffers 
-  //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT);
 
-  // draw the scene and apply the shadows 
-//  drawSceneFromCamera(_renderingShader->id());
+  drawTerrain(_normalShader->id());
+glBindFramebuffer(GL_FRAMEBUFFER,0);
+  // Rendering
+  //glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
-  // disable shader 
+  glUseProgram(_renderingShader->id());
+
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  drawRendu(_renderingShader->id());
+
   glUseProgram(0);
 }
 
@@ -342,14 +432,9 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
   if(ke->key()==Qt::Key_R) {
     _noiseShader->reload("shaders/noise.vert","shaders/noise.frag");
     _normalShader->reload("shaders/normal.vert","shaders/normal.frag");
-    _postProcessShader->reload("shaders/post-process.vert","shaders/post-process.frag");
-    _shadowMapShader->reload("shaders/shadow-map.vert","shaders/shadow-map.frag");
-    _renderingShader->reload("shaders/rendering.vert","shaders/rendering.vert");
-  }
-
-  // key S: show the shadow map 
-  if(ke->key()==Qt::Key_S) {
-    _showShadowMap = !_showShadowMap;
+//    _postProcessShader->reload("shaders/post-process.vert","shaders/post-process.frag");
+//    _shadowMapShader->reload("shaders/shadow-map.vert","shaders/shadow-map.frag");
+//    _renderingShader->reload("shaders/rendering.vert","shaders/rendering.vert");
   }
 
   updateGL();

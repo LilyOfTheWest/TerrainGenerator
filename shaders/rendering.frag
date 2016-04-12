@@ -1,94 +1,42 @@
 #version 330
 
 in  vec3  normalView;
-in  vec3  tangentView;
+//in  vec3  tangentView;
 in  vec3  eyeView;
 in  vec2  uvcoord;
-in  vec4  project_position;
 
-//uniform sampler2D shadowMapTex;
-uniform sampler2DShadow shadowMapTex;
 
-uniform sampler2D colormap;
+out vec4 bufferColor;
+
+uniform vec3 light;
 uniform sampler2D normalmap;
-uniform vec3      light;
 
-out vec4 outBuffer;
-
-// used for the last question
-vec2 poissonDisk[16] = vec2[]( 
-   vec2( -0.94201624, -0.39906216 ), 
-   vec2( 0.94558609, -0.76890725 ), 
-   vec2( -0.094184101, -0.92938870 ), 
-   vec2( 0.34495938, 0.29387760 ), 
-   vec2( -0.91588581, 0.45771432 ), 
-   vec2( -0.81544232, -0.87912464 ), 
-   vec2( -0.38277543, 0.27676845 ), 
-   vec2( 0.97484398, 0.75648379 ), 
-   vec2( 0.44323325, -0.97511554 ), 
-   vec2( 0.53742981, -0.47373420 ), 
-   vec2( -0.26496911, -0.41893023 ), 
-   vec2( 0.79197514, 0.19090188 ), 
-   vec2( -0.24188840, 0.99706507 ), 
-   vec2( -0.81409955, 0.91437590 ), 
-   vec2( 0.19984126, 0.78641367 ), 
-   vec2( 0.14383161, -0.14100790 ) 
-);
-
-// used for the last question
-float random(vec3 seed, int i){
-  vec4 seed4 = vec4(seed,i);
-  float dot_product = dot(seed4, vec4(12.9898,78.233,45.164,94.673));
-  return fract(sin(dot_product) * 43758.5453);
-}
-
-// simple normal mapping 
-vec3 getModifiedNormal() {
-  vec3 n   = normalize(normalView);
-  vec3 t   = normalize(tangentView);
-  vec3 b   = normalize(cross(n,t));
-  mat3 tbn = mat3(t,b,n);
-  vec3 tn  = normalize(texture(normalmap,uvcoord).xyz*2.0-vec3(1.0));
-  
-  return normalize(tbn*tn);
-}
 
 void main() {
-  vec3 n = getModifiedNormal();
+  float et      = 10.0;
+  vec4 texNormal = texture(normalmap,uvcoord);
+
+  // On re normalise
+  //vec3 norm = normalize(normalView);
+  //vec3 tangent = normalize(tangentView);
+
+  // Vecteur binormal
+  //vec3 binormal = cross(norm, tangent);
+
+  // Matrice TBN
+  //mat3 TBN = mat3(tangent, binormal, norm);
+
+  //vec3 normTex = texNormal.xyz*2.0-1.0;
+  //vec3 newNorm = TBN*normTex;
+//  vec3 n = normalize(newNorm);
+  vec3 n = normalize(normalView);
   vec3 e = normalize(eyeView);
   vec3 l = normalize(light);
-  vec4 c = texture(colormap,uvcoord);
 
-  float diff = max(dot(l,n),0.0);
-  float spec = pow(max(dot(reflect(l,n),e),0.0),20.0);
+  // float diff = max(dot(l,n),0.);
+  // float spec = pow(max(dot(reflect(l,n),e),0.0),et);
 
-  vec4 color = c*(diff+spec);
-
-  float v = 1.0;
-
-  // *** TODO: compute visibility by comparing current depth and the depth in the shadow map ***
-  vec4 shadcoord = project_position*0.5+0.5;
-
-  float bias = 0.015;
-
-  //  Shadow pure
-//  if (texture(shadowMapTex, shadcoord.xy).z < shadcoord.z-bias) {
-//    v = 0.5;
-//  }
-//  outbuffer = color*v;
-
-  // Shadow with soft shadows
-//  for(int i = 0; i < 16; i++) {
-//    color = color * texture(shadowMapTex,vec3(shadcoord.xy + poissonDisk[i]/300.0,(shadcoord.z-bias)/shadcoord.w));
-//  }
-//  outBuffer = color;
-
-  for(int i = 0; i < 10; i++) {
-    int ind = int(16.0*random(gl_FragCoord.xyy, i))%16;
-    color = color * texture(shadowMapTex,vec3(shadcoord.xy + poissonDisk[ind]/300.0,(shadcoord.z-bias)/shadcoord.w));
-  }
-  outBuffer = color;
-
-  // Shadow with percentage closer filtering
-//  outBuffer  = color*texture(shadowMapTex,vec3(shadcoord.xy,(shadcoord.z-bias)/shadcoord.w));
+  //bufferColor = texColor*(diff + spec)*2.0;
+//bufferColor = (diff*vec3(1.0)+spec*vec4(1));
+  bufferColor = vec4(0.5);
 }

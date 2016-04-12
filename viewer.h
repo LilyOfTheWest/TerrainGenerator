@@ -52,8 +52,10 @@ class Viewer : public QGLWidget {
 
   // drawing functions 
   void drawSceneFromCamera(GLuint id);
-  void drawSceneFromLight(GLuint id);
+  void drawHeight(GLuint id);
+  void drawTerrain(GLuint id);
   void drawShadowMap(GLuint id);
+  void drawRendu(GLuint id);
 
   void loadTexture(GLuint id,const char *filename);
   void createShaders();
@@ -84,6 +86,7 @@ class Viewer : public QGLWidget {
   GLuint  _fbo[3];
   GLuint _texHeight;
   GLuint _texNormal;
+  GLuint _texRendu;
   GLuint _texDepth;
   unsigned int _depthResol;
 };
