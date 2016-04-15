@@ -244,7 +244,6 @@ void Viewer::drawTerrain(GLuint id) {
   glBindTexture(GL_TEXTURE_2D,_texHeight);
   glUniform1i(glGetUniformLocation(id,"heightmap"),0);
 
-  glViewport(0, 0, _grid->size(),_grid->size());
   glBindVertexArray(_vaoQuad);
   glDrawArrays(GL_TRIANGLES,0,6);
   glBindVertexArray(0);
@@ -264,24 +263,6 @@ void Viewer::drawHeight(GLuint id) {
 }
 
 void Viewer::drawRendu(GLuint id){
-    glViewport(0, 0, width(),height());
-
-    glBindVertexArray(_vaoTerrain);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D,_texHeight);
-    glUniform1i(glGetUniformLocation(id,"heightmap"),0);
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D,_texNormal);
-    glUniform1i(glGetUniformLocation(id,"normalmap"),1);
-
-    // On a envoyé au shader, on unbind notre fbo
-   // glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    // on bind le nouveau afin de dessiner dedans
-    //glBindFramebuffer(GL_FRAMEBUFFER, _fbo[1]);
-
      //mdv matrix from the light point of view
     const float size = sqrt(2*pow(_grid->size(),2))/2.0;
     glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
@@ -301,6 +282,16 @@ void Viewer::drawRendu(GLuint id){
     const glm::mat4 mdv = _cam->mdvMatrix();
     glUniformMatrix4fv(glGetUniformLocation(id,"mdvMat"),1,GL_FALSE,&(mdv[0][0]));
 
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D,_texHeight);
+    glUniform1i(glGetUniformLocation(id,"heightmap"),0);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D,_texNormal);
+    glUniform1i(glGetUniformLocation(id,"normalmap"),1);
+
+    glBindVertexArray(_vaoTerrain);
+    glDrawElements(GL_TRIANGLES,3*_grid->nbFaces(),GL_UNSIGNED_INT,(void *)0);
     glBindVertexArray(0);
 }
 
@@ -319,14 +310,23 @@ void Viewer::drawShadowMap(GLuint id) {
 }
 
 void Viewer::paintGL() {
+  /* Champ de hauteur */
+  // on bind le premier fbo
   glBindFramebuffer(GL_FRAMEBUFFER,_fbo[0]);
 
+  // On dessine dans le premier buffer
   glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
+  // Taille du viewport = taille de la heightmap
+  glViewport(0, 0, _grid->size(),_grid->size());
+
+  // On clear le buffer de couleur
   glClear(GL_COLOR_BUFFER_BIT);
 
+  // On active le shader de bruit
   glUseProgram(_noiseShader->id());
 
+  // On dessine la texture de bruit
   drawHeight(_noiseShader->id());
 
 //  glBindFramebuffer(GL_FRAMEBUFFER, _fbo[0]);
@@ -338,15 +338,21 @@ void Viewer::paintGL() {
   // et Commenter ça
   glDrawBuffer(GL_COLOR_ATTACHMENT1);
 
+  // On active le shader des normales
   glUseProgram(_normalShader->id());
 
   glClear(GL_COLOR_BUFFER_BIT);
 
   drawTerrain(_normalShader->id());
-glBindFramebuffer(GL_FRAMEBUFFER,0);
+  //glBindFramebuffer(GL_FRAMEBUFFER,0);
   // Rendering
   //glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
+  // A commenter
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  glViewport(0, 0, width(),height());
+  //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glUseProgram(_renderingShader->id());
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
