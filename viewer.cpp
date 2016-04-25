@@ -254,6 +254,9 @@ void Viewer::drawTerrain(GLuint id) {
 }
 
 void Viewer::drawHeight(GLuint id) {
+
+  // envoi du vecteur de mouvement
+  glUniform3fv(glGetUniformLocation(id, "move"),1, &(_move[0]));
   glViewport(0, 0, _grid->size(),_grid->size());
   glBindVertexArray(_vaoQuad);
   glDrawArrays(GL_TRIANGLES,0,6);
@@ -409,7 +412,7 @@ void Viewer::mouseMoveEvent(QMouseEvent *me) {
 void Viewer::keyPressEvent(QKeyEvent *ke) {
     const float step = 0.05;
     // On avance
-    if(ke->key()==Qt::Key_A){
+    if(ke->key()==Qt::Key_Z){
     glm::vec2 v = glm::vec2(glm::transpose(_cam->normalMatrix())*glm::vec3(0,0,-1))*step;
     if(v[0]!=0.0 && v[1]!=0.0) v = glm::normalize(v)*step;
         else v = glm::vec2(0,1)*step;
@@ -428,11 +431,11 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
 
   // Autres mouvements
   if(ke->key()==Qt::Key_Q) {
-    _move[2] += step;
+    _move[2] += 10*step;
   }
 
   if(ke->key()==Qt::Key_D) {
-    _move[2] -= step;
+    _move[2] -= 10*step;
   }
 
   // key a: play/stop animation
