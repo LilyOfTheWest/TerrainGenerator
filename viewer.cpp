@@ -12,6 +12,7 @@ Viewer::Viewer(const QGLFormat &format)
     _timer(new QTimer(this)),
     _currentshader(0),
     _light(glm::vec3(0,0,1)),
+    _move(glm::vec3(0,0,0)),
     _mode(false),
     _showShadowMap(false),
     _depthResol(512) {
@@ -19,8 +20,8 @@ Viewer::Viewer(const QGLFormat &format)
   setlocale(LC_ALL,"C");
 
   _grid = new Grid();
-  _cam  = new Camera(sqrt(2*pow(_grid->size(),2))/2.0,glm::vec3(_grid->size()/2.0, _grid->size()/2.0, 0.0));
-
+  //_cam  = new Camera(sqrt(2*pow(_grid->size(),2))/2.0,glm::vec3(_grid->size()/2.0, _grid->size()/2.0, 0.0));
+  _cam = new Camera(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
   _timer->setInterval(10);
   connect(_timer,SIGNAL(timeout()),this,SLOT(updateGL()));
 }
@@ -406,14 +407,41 @@ void Viewer::mouseMoveEvent(QMouseEvent *me) {
 }
 
 void Viewer::keyPressEvent(QKeyEvent *ke) {
-  
-  // key a: play/stop animation
-  if(ke->key()==Qt::Key_A) {
-    if(_timer->isActive()) 
-      _timer->stop();
-    else 
-      _timer->start();
+    const float step = 0.05;
+    // On avance
+    if(ke->key()==Qt::Key_A){
+    glm::vec2 v = glm::vec2(glm::transpose(_cam->normalMatrix())*glm::vec3(0,0,-1))*step;
+    if(v[0]!=0.0 && v[1]!=0.0) v = glm::normalize(v)*step;
+        else v = glm::vec2(0,1)*step;
+        _move[0] += v[0];
+        _move[1] += v[1];
+    }
+
+    // On recule
+  if(ke->key()==Qt::Key_S) {
+    glm::vec2 v = glm::vec2(glm::transpose(_cam->normalMatrix())*glm::vec3(0,0,-1))*step;
+    if(v[0]!=0.0 && v[1]!=0.0) v = glm::normalize(v)*step;
+    else v = glm::vec2(0,1)*step;
+    _move[0] -= v[0];
+    _move[1] -= v[1];
   }
+
+  // Autres mouvements
+  if(ke->key()==Qt::Key_Q) {
+    _move[2] += step;
+  }
+
+  if(ke->key()==Qt::Key_D) {
+    _move[2] -= step;
+  }
+
+  // key a: play/stop animation
+    if(ke->key()==Qt::Key_A) {
+      if(_timer->isActive())
+        _timer->stop();
+      else
+        _timer->start();
+    }
 
   // key i: init camera
   if(ke->key()==Qt::Key_I) {
@@ -440,8 +468,18 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
     _normalShader->reload("shaders/normal.vert","shaders/normal.frag");
 //    _postProcessShader->reload("shaders/post-process.vert","shaders/post-process.frag");
 //    _shadowMapShader->reload("shaders/shadow-map.vert","shaders/shadow-map.frag");
-//    _renderingShader->reload("shaders/rendering.vert","shaders/rendering.vert");
+    _renderingShader->reload("shaders/rendering.vert","shaders/rendering.vert");
   }
+
+  // key X: show height map
+    if(ke->key()==Qt::Key_X) {
+      _showHeightMap = !_showHeightMap;
+    }
+
+    // key W: show the shadow map
+    if(ke->key()==Qt::Key_W) {
+      _showShadowMap = !_showShadowMap;
+    }
 
   updateGL();
 }

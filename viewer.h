@@ -68,8 +68,10 @@ class Viewer : public QGLWidget {
   Camera *_cam;    // the camera
 
   glm::vec3 _light; // light direction
+  glm::vec3 _move;
   bool      _mode;  // camera motion or light motion
-  bool      _showShadowMap;
+  bool      _showShadowMap; // Permet d'afficher la shadow map
+  bool      _showHeightMap; // Permet d'afficher le champ de hauteur
 
   Shader *_shadowMapShader;
   Shader *_renderingShader;

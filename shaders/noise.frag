@@ -40,7 +40,7 @@ float pnoise(in vec2 p,in float amplitude,in float frequency,in float persistenc
 
 void main() {
   vec3 motion = vec3(0.); // could be controlled via a global uniform variable
-  float p = pnoise(pos+motion.xy,2.0,4.0,0.5,10)+motion.z;
+  float p = pnoise(pos+motion.xy,30.0,4.0,0.4,10)+motion.z;
 
   outBuffer = vec4(p*0.5+0.5);
 }
