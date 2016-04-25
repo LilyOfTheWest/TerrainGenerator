@@ -20,6 +20,7 @@ Viewer::Viewer(const QGLFormat &format)
   setlocale(LC_ALL,"C");
 
   _grid = new Grid();
+  _depthResol = _grid->size();
   //_cam  = new Camera(sqrt(2*pow(_grid->size(),2))/2.0,glm::vec3(_grid->size()/2.0, _grid->size()/2.0, 0.0));
   _cam = new Camera(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
   _timer->setInterval(10);
@@ -60,6 +61,7 @@ void Viewer::deleteFBO() {
   glDeleteTextures(1,&_texHeight);
   glDeleteTextures(1, &_texNormal);
   glDeleteTextures(1, &_texRendu);
+  glDeleteTextures(1, &_texDepth);
 }
 
 void Viewer::createFBO() {
@@ -69,7 +71,9 @@ void Viewer::createFBO() {
     glGenTextures(1,&_texHeight);
     glGenTextures(1, &_texNormal);
     glGenTextures(1, &_texRendu);
+    glGenTextures(1, &_texDepth);
 
+    // Texture de la hauteur
     glBindTexture(GL_TEXTURE_2D, _texHeight);
     glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA32F,_grid->size(),_grid->size(),0,GL_RGBA,GL_FLOAT,NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -80,6 +84,7 @@ void Viewer::createFBO() {
 //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 //    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 
+    // Texture des normales
     glBindTexture(GL_TEXTURE_2D, _texNormal);
     glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA32F,_grid->size(),_grid->size(),0,GL_RGBA,GL_FLOAT,NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -87,12 +92,24 @@ void Viewer::createFBO() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+    // Texture du rendu
     glBindTexture(GL_TEXTURE_2D, _texRendu);
     glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA32F,width(),height(),0,GL_RGBA,GL_FLOAT,NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // Texture de profondeur
+    glBindTexture(GL_TEXTURE_2D,_texDepth);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,_depthResol,_depthResol,0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 
   // attach textures to framebuffer object 
     glBindFramebuffer(GL_FRAMEBUFFER,_fbo[0]);
@@ -106,6 +123,9 @@ void Viewer::createFBO() {
     glBindTexture(GL_TEXTURE_2D,_texRendu);
     glFramebufferTexture2D(GL_FRAMEBUFFER_EXT,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,_texRendu,0);
 
+    glBindFramebuffer(GL_FRAMEBUFFER, _fbo[2]);
+    glBindTexture(GL_TEXTURE_2D, _texDepth);
+    glFramebufferTexture2D(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _texDepth,0);
 
   // test if everything is ok
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -187,13 +207,15 @@ void Viewer::createShaders() {
   _noiseShader = new Shader();
   _normalShader = new Shader();
 //  _postProcessShader = new Shader();
-//  _shadowMapShader = new Shader(); // will create the shadow map
+  _shadowMapShader = new Shader(); // will create the shadow map
+  _showShadowMapShader = new Shader();
   _renderingShader = new Shader(); // render the scene, use shadow map
 
   _noiseShader->load("shaders/noise.vert", "shaders/noise.frag");
   _normalShader->load("shaders/normal.vert", "shaders/normal.frag");
 //  _postProcessShader->load("shaders/post-process.vert", "shaders/post-process.frag");
-//  _shadowMapShader->load("shaders/shadow-map.vert","shaders/shadow-map.frag");
+  _shadowMapShader->load("shaders/shadow-map.vert","shaders/shadow-map.frag");
+  _showShadowMapShader->load("shaders/show-shadow-map.vert","shaders/show-shadow-map.frag");
   _renderingShader->load("shaders/rendering.vert","shaders/rendering.frag");
 }
 
@@ -202,8 +224,9 @@ void Viewer::deleteShaders() {
   delete _noiseShader;  _noiseShader = NULL;
   delete _normalShader; _normalShader = NULL;
 //  delete _postProcessShader;    _postProcessShader = NULL;
-//  delete _shadowMapShader; _shadowMapShader = NULL;
+  delete _shadowMapShader; _shadowMapShader = NULL;
   delete _renderingShader; _renderingShader = NULL;
+  delete _showShadowMapShader; _showShadowMapShader = NULL;
 }
 
 void Viewer::drawSceneFromCamera(GLuint id) {
@@ -294,20 +317,46 @@ void Viewer::drawRendu(GLuint id){
     glBindTexture(GL_TEXTURE_2D,_texNormal);
     glUniform1i(glGetUniformLocation(id,"normalmap"),1);
 
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, _texDepth);
+    glUniform1i(glGetUniformLocation(id, "shadowMapTex"), 2);
+
     glBindVertexArray(_vaoTerrain);
     glDrawElements(GL_TRIANGLES,3*_grid->nbFaces(),GL_UNSIGNED_INT,(void *)0);
     glBindVertexArray(0);
 }
 
-void Viewer::drawShadowMap(GLuint id) {
-  // send depth texture 
-//  glActiveTexture(GL_TEXTURE0);
-//  glBindTexture(GL_TEXTURE_2D,_texDepth);
-//  glUniform1i(glGetUniformLocation(id,"shadowmap"),0);
+void Viewer::drawShadow(GLuint id) {
+    // mdv matrix from the light point of view
+      const float size = sqrt(2*pow(_grid->size(),2))/2.0;
+      glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
+      glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
+      glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,1,0));
+      glm::mat4 m   = glm::mat4(1.0);
+      glm::mat4 mv  = v*m;
 
-  // draw the quad 
-//  glBindVertexArray(_vaoQuad);
-//  glDrawArrays(GL_TRIANGLES,0,6);
+      const glm::mat4 mvpDepth = p*mv;
+      glUniformMatrix4fv(glGetUniformLocation(id,"mvpMat"),1,GL_FALSE,&mvpDepth[0][0]);
+
+      // On envoit notre information sur la hauteur
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D,_texHeight);
+      glUniform1i(glGetUniformLocation(id,"heightMap"),0);
+      glBindVertexArray(_vaoTerrain);
+
+      glDrawElements(GL_TRIANGLES,3*_grid->nbFaces(),GL_UNSIGNED_INT,(void *)0);
+      glBindVertexArray(0);
+}
+
+void Viewer::drawShadowMap(GLuint id) {
+  // send depth texture
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D,_texDepth);
+  glUniform1i(glGetUniformLocation(id,"shadowmap"),0);
+
+  // draw the quad
+  glBindVertexArray(_vaoQuad);
+  glDrawArrays(GL_TRIANGLES,0,6);
 
   // disable VAO
   glBindVertexArray(0);
@@ -333,13 +382,6 @@ void Viewer::paintGL() {
   // On dessine la texture de bruit
   drawHeight(_noiseShader->id());
 
-//  glBindFramebuffer(GL_FRAMEBUFFER, _fbo[0]);
-
-  // Normal
-  // Pour tester l'affichage, décommentez ça
-  //glBindFramebuffer(GL_FRAMEBUFFER,0);
-
-  // et Commenter ça
   glDrawBuffer(GL_COLOR_ATTACHMENT1);
 
   // On active le shader des normales
@@ -353,16 +395,41 @@ void Viewer::paintGL() {
   //glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
   // A commenter
+  //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  // Shadow map TODO : DEBUG
+//  glBindFramebuffer(GL_FRAMEBUFFER, _fbo[2]);
+//  glDrawBuffer(GL_NONE);
+//  glClear(GL_DEPTH_BUFFER_BIT);
+//  glUseProgram(_shadowMapShader->id());
+//  glViewport(0,0,_depthResol, _depthResol);
+//  drawShadow(_shadowMapShader->id());
+
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+  // On revient au viewport de l'écran
   glViewport(0, 0, width(),height());
   //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glUseProgram(_renderingShader->id());
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  // On dessine le rendu
   drawRendu(_renderingShader->id());
 
+  // Pour afficher la shadowmap
+  if(_showShadowMap) {
+      // activate the test shader
+      glUseProgram(_showShadowMapShader->id());
+
+      // clear buffers
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+      // display the shadow map
+      drawShadowMap(_showShadowMapShader->id());
+    }
+
+  // On désactive les shaders
   glUseProgram(0);
 }
 
@@ -410,7 +477,7 @@ void Viewer::mouseMoveEvent(QMouseEvent *me) {
 }
 
 void Viewer::keyPressEvent(QKeyEvent *ke) {
-    const float step = 0.05;
+    const float step = 0.025;
     // On avance
     if(ke->key()==Qt::Key_Z){
     glm::vec2 v = glm::vec2(glm::transpose(_cam->normalMatrix())*glm::vec3(0,0,-1))*step;
@@ -431,11 +498,11 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
 
   // Autres mouvements
   if(ke->key()==Qt::Key_Q) {
-    _move[2] += 10*step;
+    _move[2] += 20*step;
   }
 
   if(ke->key()==Qt::Key_D) {
-    _move[2] -= 10*step;
+    _move[2] -= 20*step;
   }
 
   // key a: play/stop animation
@@ -470,7 +537,8 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
     _noiseShader->reload("shaders/noise.vert","shaders/noise.frag");
     _normalShader->reload("shaders/normal.vert","shaders/normal.frag");
 //    _postProcessShader->reload("shaders/post-process.vert","shaders/post-process.frag");
-//    _shadowMapShader->reload("shaders/shadow-map.vert","shaders/shadow-map.frag");
+    _shadowMapShader->reload("shaders/shadow-map.vert","shaders/shadow-map.frag");
+    _showShadowMapShader->reload("shaders/show-shadow-map.vert","shaders/show-shadow-map.frag");
     _renderingShader->reload("shaders/rendering.vert","shaders/rendering.vert");
   }
 

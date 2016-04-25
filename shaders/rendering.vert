@@ -8,6 +8,7 @@ layout(location = 1) in vec3 faces;
 uniform mat4 mdvMat;      // modelview matrix
 uniform mat4 projMat;     // projection matrix
 uniform mat3 normalMat;   // normal matrix
+uniform mat4 mvpDepthMat; // mvp depth matrix
 
 uniform sampler2D heightmap;
 // output vectors (camera space)
@@ -18,24 +19,10 @@ out vec3 tangentView;
 out vec3 normal;
 out vec4 height;
 out vec3 eyeView;
+out vec4 project_position;
 
 void main() {
   uvcoord     = position.xy*0.5+vec2(0.5);
-
-  // float ps = 1./512;
-  // float hh = texture(heightmap, uvcoord + vec2(0, ps)).x;
-  // float hb = texture(heightmap, uvcoord - vec2(0, ps)).x;
-  // float hd = texture(heightmap, uvcoord + vec2(ps, 0)).x;
-  // float hg = texture(heightmap, uvcoord - vec2(ps, 0)).x;
-  //
-  // // gradient
-  // float c = 2.0;
-  // float gx = (hd - hg) * c;
-  // float gy = (hh - hd) * c;
-  //
-  // vec3 v1 = vec3(1, 0, gx);
-  // vec3 v2 = vec3(0, 1, gy);
-  // vec3 normal = cross(v1, v2);
 
   vec3 normal = vec3(0.0,0.0,1.0);
   vec4 texHeightmap = texture(heightmap,uvcoord);
@@ -46,6 +33,7 @@ void main() {
   normalView = normalize(normalMat*normal);
   tangentView = normalize(normalMat*tangent);
   height = vec4(newPos,1.0);
-  eyeView     = normalize((mdvMat*vec4(position,1.0)).xyz);
+  eyeView     = normalize((mdvMat*vec4(newPos,1.0)).xyz);
   gl_Position = projMat*mdvMat*height;
+  project_position = mvpDepthMat*vec4(newPos, 1.0);
 }

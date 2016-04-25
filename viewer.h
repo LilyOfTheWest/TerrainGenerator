@@ -54,6 +54,7 @@ class Viewer : public QGLWidget {
   void drawSceneFromCamera(GLuint id);
   void drawHeight(GLuint id);
   void drawTerrain(GLuint id);
+  void drawShadow(GLuint id);
   void drawShadowMap(GLuint id);
   void drawRendu(GLuint id);
 
@@ -78,6 +79,7 @@ class Viewer : public QGLWidget {
   Shader *_noiseShader;
   Shader *_normalShader;
   Shader *_postProcessShader;
+  Shader *_showShadowMapShader;
 
   GLuint _vaoTerrain;
   GLuint _vaoQuad;
