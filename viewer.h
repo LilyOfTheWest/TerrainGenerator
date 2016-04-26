@@ -92,6 +92,7 @@ class Viewer : public QGLWidget {
   GLuint _texNormal;
   GLuint _texRendu;
   GLuint _texDepth;
+  GLuint _texColor;
   unsigned int _depthResol;
 };
 

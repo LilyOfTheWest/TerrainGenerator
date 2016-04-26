@@ -161,6 +161,36 @@ void Viewer::loadTexture(GLuint id,const char *filename) {
 
 void Viewer::createTextures() {
 
+    QImage colorImg;
+
+    // enable the use of 1D textures
+    glEnable(GL_TEXTURE_1D);
+
+    // create one texture on the GPU
+    glGenTextures(1,&_texColor);
+
+    // load an image (CPU side)
+    colorImg = QGLWidget::convertToGLFormat(QImage("textures/1DcolorTex.png"));
+
+    // ------ activate this texture : image
+    glBindTexture(GL_TEXTURE_1D,_texColor);
+
+    // texture sampling/filtering operation.
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+    // transfer data from CPU to GPU memory
+    //TODO : Change to 1D
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA32F,colorImg.width(),colorImg.height(),0,
+             GL_RGBA,GL_UNSIGNED_BYTE,(const GLvoid *)colorImg.bits());
+
+    // generate mipmaps
+    glGenerateMipmap(GL_TEXTURE_1D);
+
+    glBindTexture(GL_TEXTURE_1D, 0);
+
   // generate 3 texture ids 
 //  glGenTextures(2,_texColor);
 //  glGenTextures(2,_texNormal);
