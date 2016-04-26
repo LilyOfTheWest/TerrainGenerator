@@ -5,8 +5,11 @@ layout(location = 1) out vec4 outHeight;
 layout(location = 2) out vec4 outNormal;
 
 uniform sampler2D normalmap;
+uniform sampler1D colormap;
 uniform sampler2DShadow shadowMapTex;
+
 uniform vec3 light;
+
 in  vec3  normalView;
 in  vec3  tangentView;
 in  vec3  normal;
@@ -54,6 +57,9 @@ void main() {
   vec4 shadCoord = project_position*0.5+0.5;
   float bias = 0.015;
 
+  vec4 texColorMap = texture(colormap,1);
+  if(texColorMap == vec4(0.0,0.0,0.0,0.0)) texColorMap = marron;
+
 //  vec3 newNorm = normalize(tbn*normal);
 
   vec3 normTex = texNormalMap.xyz*2.0-1.0;
@@ -67,7 +73,8 @@ void main() {
   float diff = max(dot(l,n),0.);
   float spec = pow(max(dot(reflect(l,n),e),0.0),et);
 
-  bufferColor = (diff*marron);
+  bufferColor = (diff*texColorMap);
+  //bufferColor = (diff*marron);
   vec4 color = bufferColor;
   // Shadow with soft shadows
    for(int i = 0; i < 16; i++) {

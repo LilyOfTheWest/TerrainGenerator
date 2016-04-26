@@ -172,7 +172,7 @@ void Viewer::createTextures() {
     // load an image (CPU side)
     colorImg = QGLWidget::convertToGLFormat(QImage("textures/1DcolorTex.png"));
 
-    // ------ activate this texture : image
+    // ------ activate this texture : colorImg
     glBindTexture(GL_TEXTURE_1D,_texColor);
 
     // texture sampling/filtering operation.
@@ -182,9 +182,16 @@ void Viewer::createTextures() {
     glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
     // transfer data from CPU to GPU memory
-    //TODO : Change to 1D
-    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA32F,colorImg.width(),colorImg.height(),0,
-             GL_RGBA,GL_UNSIGNED_BYTE,(const GLvoid *)colorImg.bits());
+    glTexImage1D(
+        GL_TEXTURE_1D,                  // Specifies the target texture. Must be GL_TEXTURE_1D or GL_PROXY_TEXTURE_1D.
+        0,                              // Specifies the level-of-detail number. Level 0 is the base image level. Level n is the nth mipmap reduction image.
+        GL_RGBA32F,
+        colorImg.width(),               // size of the image (just width because 1D)
+        0,                              // border: This value must be 0
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,               // TODO : GL_FLOAT ?
+        (const GLvoid *)colorImg.bits() // data
+    );
 
     // generate mipmaps
     glGenerateMipmap(GL_TEXTURE_1D);
@@ -341,17 +348,25 @@ void Viewer::drawRendu(GLuint id){
     const glm::mat4 mdv = _cam->mdvMatrix();
     glUniformMatrix4fv(glGetUniformLocation(id,"mdvMat"),1,GL_FALSE,&(mdv[0][0]));
 
+    // send height texture
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,_texHeight);
     glUniform1i(glGetUniformLocation(id,"heightmap"),0);
 
+    // send normal texture
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D,_texNormal);
     glUniform1i(glGetUniformLocation(id,"normalmap"),1);
 
+    // send shadow texture
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, _texDepth);
     glUniform1i(glGetUniformLocation(id, "shadowMapTex"), 2);
+
+    // send color texture
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D,_texColor);
+    glUniform1i(glGetUniformLocation(id,"colormap"),3);
 
     glBindVertexArray(_vaoTerrain);
     glDrawElements(GL_TRIANGLES,3*_grid->nbFaces(),GL_UNSIGNED_INT,(void *)0);
