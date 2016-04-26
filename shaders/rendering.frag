@@ -47,7 +47,7 @@ float random(vec3 seed, int i){
 
 void main() {
   float et = 10.0;
-  vec4 marron = vec4(0.345, 0.16, 0.0, 1.0);
+  //vec4 marron = vec4(0.345, 0.16, 0.0, 1.0);
   vec3 norm = normalize(normalView);
   vec3 t = normalize(tangentView);
   vec3 b = normalize(cross(norm,t));
@@ -57,8 +57,8 @@ void main() {
   vec4 shadCoord = project_position*0.5+0.5;
   float bias = 0.015;
 
-  vec4 texColorMap = texture(colormap,1);
-  if(texColorMap == vec4(0.0,0.0,0.0,0.0)) texColorMap = marron;
+  vec4 texColorMap = texture(colormap,(height.z*0.5+0.5));//TODO : remap height.z between 0 and 1
+  if(texColorMap == vec4(0.0,0.0,0.0,0.0)) texColorMap = vec4(0.0,0.0,1.0,1.0);
 
 //  vec3 newNorm = normalize(tbn*normal);
 

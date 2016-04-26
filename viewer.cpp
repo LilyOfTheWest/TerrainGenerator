@@ -196,8 +196,6 @@ void Viewer::createTextures() {
     // generate mipmaps
     glGenerateMipmap(GL_TEXTURE_1D);
 
-    glBindTexture(GL_TEXTURE_1D, 0);
-
   // generate 3 texture ids 
 //  glGenTextures(2,_texColor);
 //  glGenTextures(2,_texNormal);
@@ -364,8 +362,8 @@ void Viewer::drawRendu(GLuint id){
     glUniform1i(glGetUniformLocation(id, "shadowMapTex"), 2);
 
     // send color texture
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D,_texColor);
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_1D, _texColor);
     glUniform1i(glGetUniformLocation(id,"colormap"),3);
 
     glBindVertexArray(_vaoTerrain);
