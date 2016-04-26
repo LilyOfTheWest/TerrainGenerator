@@ -57,7 +57,8 @@ void main() {
   vec4 shadCoord = project_position*0.5+0.5;
   float bias = 0.015;
 
-  vec4 texColorMap = texture(colormap,(height.z*0.5+0.5));//TODO : remap height.z between 0 and 1
+  float pickColor = 0.4+height.z; //TODO : peut mieux faire pour le calcul de la coordonée ?
+  vec4 texColorMap = texture(colormap,pickColor);
   if(texColorMap == vec4(0.0,0.0,0.0,0.0)) texColorMap = vec4(0.0,0.0,1.0,1.0);
 
 //  vec3 newNorm = normalize(tbn*normal);
