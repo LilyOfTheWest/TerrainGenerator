@@ -15,6 +15,33 @@ in  vec2  uvcoord;
 in  vec3  eyeView;
 in  vec4  project_position;
 
+// used for the last question
+vec2 poissonDisk[16] = vec2[](
+   vec2( -0.94201624, -0.39906216 ),
+   vec2( 0.94558609, -0.76890725 ),
+   vec2( -0.094184101, -0.92938870 ),
+   vec2( 0.34495938, 0.29387760 ),
+   vec2( -0.91588581, 0.45771432 ),
+   vec2( -0.81544232, -0.87912464 ),
+   vec2( -0.38277543, 0.27676845 ),
+   vec2( 0.97484398, 0.75648379 ),
+   vec2( 0.44323325, -0.97511554 ),
+   vec2( 0.53742981, -0.47373420 ),
+   vec2( -0.26496911, -0.41893023 ),
+   vec2( 0.79197514, 0.19090188 ),
+   vec2( -0.24188840, 0.99706507 ),
+   vec2( -0.81409955, 0.91437590 ),
+   vec2( 0.19984126, 0.78641367 ),
+   vec2( 0.14383161, -0.14100790 )
+);
+
+// used for the last question
+float random(vec3 seed, int i){
+  vec4 seed4 = vec4(seed,i);
+  float dot_product = dot(seed4, vec4(12.9898,78.233,45.164,94.673));
+  return fract(sin(dot_product) * 43758.5453);
+}
+
 void main() {
   float et = 10.0;
   vec4 marron = vec4(0.345, 0.16, 0.0, 1.0);
@@ -41,11 +68,17 @@ void main() {
   float spec = pow(max(dot(reflect(l,n),e),0.0),et);
 
   bufferColor = (diff*marron);
-
+  vec4 color = bufferColor;
+  // Shadow with soft shadows
+   for(int i = 0; i < 16; i++) {
+     color = color * texture(shadowMapTex,vec3(shadCoord.xy + poissonDisk[i]/300.0,(shadCoord.z-bias)/shadCoord.w));
+   }
+   if(color != vec4(0.0,0.0,0.0,0.0))
+      bufferColor = color;
   // Shadow with percentage closer filtering
   // DECOMMENTER LA LIGNE SUIVANTE QUAND LE BLOC SHADOW MAP FONCTIONNE DANS VIEWER.CPP
-  //bufferColor *= texture(shadowMapTex, vec3(shadCoord.xy, (shadCoord.z-bias)/shadCoord.w));
 
+  // vec4 shadowColor = texture(shadowMapTex, vec3(shadCoord.xy, (shadCoord.z-bias)/shadCoord.w));
   outHeight = height;
   outNormal=vec4(newNorm, 1.0);
 }

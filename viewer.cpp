@@ -58,6 +58,7 @@ void Viewer::deleteFBO() {
   // delete all FBO Ids
   glDeleteFramebuffers(1,&_fbo[0]);
   glDeleteFramebuffers(1, &_fbo[1]);
+  glDeleteFramebuffers(1, &_fbo[2]);
   glDeleteTextures(1,&_texHeight);
   glDeleteTextures(1, &_texNormal);
   glDeleteTextures(1, &_texRendu);
@@ -68,6 +69,7 @@ void Viewer::createFBO() {
   // generate fbo and associated textures
     glGenFramebuffers(1, &_fbo[0]);
     glGenFramebuffers(1, &_fbo[1]);
+    glGenFramebuffers(1, &_fbo[2]);
     glGenTextures(1,&_texHeight);
     glGenTextures(1, &_texNormal);
     glGenTextures(1, &_texRendu);
@@ -108,8 +110,8 @@ void Viewer::createFBO() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 
   // attach textures to framebuffer object 
     glBindFramebuffer(GL_FRAMEBUFFER,_fbo[0]);
@@ -367,6 +369,9 @@ void Viewer::paintGL() {
   // on bind le premier fbo
   glBindFramebuffer(GL_FRAMEBUFFER,_fbo[0]);
 
+  glDisable(GL_DEPTH_TEST);
+  glDepthMask(GL_FALSE);
+
   // On dessine dans le premier buffer
   glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
@@ -395,15 +400,20 @@ void Viewer::paintGL() {
   //glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
   // A commenter
-  //glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+  glEnable(GL_DEPTH_TEST);
+  glDepthMask(GL_TRUE);
 
   // Shadow map TODO : DEBUG
-//  glBindFramebuffer(GL_FRAMEBUFFER, _fbo[2]);
-//  glDrawBuffer(GL_NONE);
-//  glClear(GL_DEPTH_BUFFER_BIT);
-//  glUseProgram(_shadowMapShader->id());
-//  glViewport(0,0,_depthResol, _depthResol);
-//  drawShadow(_shadowMapShader->id());
+
+  glBindFramebuffer(GL_FRAMEBUFFER, _fbo[2]);
+
+  glDrawBuffer(GL_NONE);
+  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+  glUseProgram(_shadowMapShader->id());
+  glViewport(0,0,_depthResol, _depthResol);
+  drawShadow(_shadowMapShader->id());
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -419,6 +429,8 @@ void Viewer::paintGL() {
 
   // Pour afficher la shadowmap
   if(_showShadowMap) {
+      glDisable(GL_DEPTH_TEST);
+      glDepthMask(GL_FALSE);
       // activate the test shader
       glUseProgram(_showShadowMapShader->id());
 
@@ -427,6 +439,9 @@ void Viewer::paintGL() {
 
       // display the shadow map
       drawShadowMap(_showShadowMapShader->id());
+
+      glEnable(GL_DEPTH_TEST);
+      glDepthMask(GL_TRUE);
     }
 
   // On désactive les shaders
