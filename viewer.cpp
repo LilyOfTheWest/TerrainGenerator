@@ -20,7 +20,7 @@ Viewer::Viewer(const QGLFormat &format)
   setlocale(LC_ALL,"C");
 
   _grid = new Grid();
-  _depthResol = _grid->size();
+  //_depthResol = _grid->size();
   //_cam  = new Camera(sqrt(2*pow(_grid->size(),2))/2.0,glm::vec3(_grid->size()/2.0, _grid->size()/2.0, 0.0));
   _cam = new Camera(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
   _timer->setInterval(10);
@@ -67,8 +67,11 @@ void Viewer::deleteFBO() {
 
 void Viewer::createFBO() {
   // generate fbo and associated textures
+    // Fbo de height map et normal map
     glGenFramebuffers(1, &_fbo[0]);
+    // Fbo de rendu
     glGenFramebuffers(1, &_fbo[1]);
+    // Fbo de shadow map
     glGenFramebuffers(1, &_fbo[2]);
     glGenTextures(1,&_texHeight);
     glGenTextures(1, &_texNormal);
@@ -110,8 +113,8 @@ void Viewer::createFBO() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 
   // attach textures to framebuffer object 
     glBindFramebuffer(GL_FRAMEBUFFER,_fbo[0]);
@@ -352,17 +355,17 @@ void Viewer::drawRendu(GLuint id){
     glUniform1i(glGetUniformLocation(id,"heightmap"),0);
 
     // send normal texture
-    glActiveTexture(GL_TEXTURE1);
+    glActiveTexture(GL_TEXTURE0+1);
     glBindTexture(GL_TEXTURE_2D,_texNormal);
     glUniform1i(glGetUniformLocation(id,"normalmap"),1);
 
     // send shadow texture
-    glActiveTexture(GL_TEXTURE2);
+    glActiveTexture(GL_TEXTURE0+2);
     glBindTexture(GL_TEXTURE_2D, _texDepth);
     glUniform1i(glGetUniformLocation(id, "shadowMapTex"), 2);
 
     // send color texture
-    glActiveTexture(GL_TEXTURE3);
+    glActiveTexture(GL_TEXTURE0+3);
     glBindTexture(GL_TEXTURE_1D, _texColor);
     glUniform1i(glGetUniformLocation(id,"colormap"),3);
 
@@ -373,7 +376,8 @@ void Viewer::drawRendu(GLuint id){
 
 void Viewer::drawShadow(GLuint id) {
     // mdv matrix from the light point of view
-      const float size = sqrt(2*pow(_grid->size(),2))/2.0;
+      //const float size = sqrt(2*pow(_grid->size(),2))/2.0;
+      const float size = sqrt(2);
       glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
       glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
       glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,1,0));
@@ -453,7 +457,7 @@ void Viewer::paintGL() {
   glBindFramebuffer(GL_FRAMEBUFFER, _fbo[2]);
 
   glDrawBuffer(GL_NONE);
-  glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+  glClear(GL_DEPTH_BUFFER_BIT);
   glUseProgram(_shadowMapShader->id());
   glViewport(0,0,_depthResol, _depthResol);
   drawShadow(_shadowMapShader->id());
