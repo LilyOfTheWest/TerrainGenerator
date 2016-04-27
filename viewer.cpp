@@ -166,48 +166,80 @@ void Viewer::createTextures() {
 
     QImage colorImg;
 
+    /**********************************
+                2D Version
+    **********************************/
+
     // enable the use of 1D textures
-    glEnable(GL_TEXTURE_1D);
+    glEnable(GL_TEXTURE_2D);
 
     // create one texture on the GPU
     glGenTextures(1,&_texColor);
 
     // load an image (CPU side)
-    colorImg = QGLWidget::convertToGLFormat(QImage("textures/1DcolorTex.png"));
+    colorImg = QGLWidget::convertToGLFormat(QImage("textures/2DcolorTex.png"));
 
     // ------ activate this texture : colorImg
-    glBindTexture(GL_TEXTURE_1D,_texColor);
+    glBindTexture(GL_TEXTURE_2D,_texColor);
 
     // texture sampling/filtering operation.
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
     // transfer data from CPU to GPU memory
-    glTexImage1D(
-        GL_TEXTURE_1D,                  // Specifies the target texture. Must be GL_TEXTURE_1D or GL_PROXY_TEXTURE_1D.
-        0,                              // Specifies the level-of-detail number. Level 0 is the base image level. Level n is the nth mipmap reduction image.
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
         GL_RGBA32F,
-        colorImg.width(),               // size of the image (just width because 1D)
-        0,                              // border: This value must be 0
+        colorImg.width(),
+        colorImg.height(),
+        0,
         GL_RGBA,
-        GL_UNSIGNED_BYTE,               // TODO : GL_FLOAT ?
-        (const GLvoid *)colorImg.bits() // data
+        GL_UNSIGNED_BYTE,
+        (const GLvoid *)colorImg.bits()
     );
 
     // generate mipmaps
-    glGenerateMipmap(GL_TEXTURE_1D);
+    glGenerateMipmap(GL_TEXTURE_2D);
 
-  // generate 3 texture ids 
-//  glGenTextures(2,_texColor);
-//  glGenTextures(2,_texNormal);
+//    /**********************************
+//                1D Version
+//    **********************************/
 
-  // load all needed textures 
-//  loadTexture(_texColor[0],"textures/color01.jpg");
-//  loadTexture(_texNormal[0],"textures/normal01.jpg");
-//  loadTexture(_texColor[1],"textures/color02.jpg");
-//  loadTexture(_texNormal[1],"textures/normal02.jpg");
+//    // enable the use of 1D textures
+//    glEnable(GL_TEXTURE_1D);
+
+//    // create one texture on the GPU
+//    glGenTextures(1,&_texColor);
+
+//    // load an image (CPU side)
+//    colorImg = QGLWidget::convertToGLFormat(QImage("textures/1DcolorTex.png"));
+
+//    // ------ activate this texture : colorImg
+//    glBindTexture(GL_TEXTURE_1D,_texColor);
+
+//    // texture sampling/filtering operation.
+//    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//    glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+//    // transfer data from CPU to GPU memory
+//    glTexImage1D(
+//        GL_TEXTURE_1D,                  // Specifies the target texture. Must be GL_TEXTURE_1D or GL_PROXY_TEXTURE_1D.
+//        0,                              // Specifies the level-of-detail number. Level 0 is the base image level. Level n is the nth mipmap reduction image.
+//        GL_RGBA32F,
+//        colorImg.width(),               // size of the image (just width because 1D)
+//        0,                              // border: This value must be 0
+//        GL_RGBA,
+//        GL_UNSIGNED_BYTE,               // TODO : GL_FLOAT ?
+//        (const GLvoid *)colorImg.bits() // data
+//    );
+
+//    // generate mipmaps
+//    glGenerateMipmap(GL_TEXTURE_1D);
 }
 
 void Viewer::createVAO() {
@@ -342,9 +374,14 @@ void Viewer::drawRendu(GLuint id){
     glUniform1i(glGetUniformLocation(id, "shadowMapTex"), 2);
 
     // send color texture
+    //2D
     glActiveTexture(GL_TEXTURE0+3);
-    glBindTexture(GL_TEXTURE_1D, _texColor);
+    glBindTexture(GL_TEXTURE_2D, _texColor);
     glUniform1i(glGetUniformLocation(id,"colormap"),3);
+//    //1D
+//    glActiveTexture(GL_TEXTURE0+3);
+//    glBindTexture(GL_TEXTURE_1D, _texColor);
+//    glUniform1i(glGetUniformLocation(id,"colormap"),3);
 
     glBindVertexArray(_vaoTerrain);
     glDrawElements(GL_TRIANGLES,3*_grid->nbFaces(),GL_UNSIGNED_INT,(void *)0);

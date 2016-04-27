@@ -5,8 +5,11 @@ layout(location = 1) out vec4 outHeight;
 layout(location = 2) out vec4 outNormal;
 
 uniform sampler2D normalmap;
-uniform sampler1D colormap;
 uniform sampler2DShadow shadowMapTex;
+//2D
+uniform sampler2D colormap;
+//1D
+//uniform sampler1D colormap;
 
 uniform vec3 light;
 
@@ -47,7 +50,6 @@ float random(vec3 seed, int i){
 
 void main() {
   float et = 10.0;
-  //vec4 marron = vec4(0.345, 0.16, 0.0, 1.0);
   vec3 norm = normalize(normalView);
   vec3 t = normalize(tangentView);
   vec3 b = normalize(cross(norm,t));
@@ -57,7 +59,10 @@ void main() {
   vec4 shadCoord = project_position*0.5+0.5;
   float bias = 0.015;
 
-  float pickColor = 0.4+height.z; //TODO : peut mieux faire pour le calcul de la coordonée ?
+  //2D
+  vec2 pickColor = vec2(0.5+height.z, height.x);
+  //1D
+  //float pickColor = 0.4+height.z; //TODO : peut mieux faire pour le calcul de la coordonée ?
   vec4 texColorMap = texture(colormap,pickColor);
   if(texColorMap == vec4(0.0,0.0,0.0,0.0)) texColorMap = vec4(0.0,0.0,1.0,1.0);
 
