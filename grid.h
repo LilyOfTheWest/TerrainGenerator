@@ -2,6 +2,7 @@
 #define GRID_H
 
 #include <vector>
+#include <math.h>
 
 class Grid {
  public:
@@ -13,6 +14,7 @@ class Grid {
 
   inline float *vertices() {return &_vertices[0];}
   inline int   *faces   () {return &_faces[0];   }
+  inline float radius  () {return sqrt(2);      }
 
   unsigned int size();
 //  void setSize(unsigned int size);

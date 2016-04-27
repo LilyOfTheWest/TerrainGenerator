@@ -21,8 +21,8 @@ Viewer::Viewer(const QGLFormat &format)
 
   _grid = new Grid();
   //_depthResol = _grid->size();
-  //_cam  = new Camera(sqrt(2*pow(_grid->size(),2))/2.0,glm::vec3(_grid->size()/2.0, _grid->size()/2.0, 0.0));
-  _cam = new Camera(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
+  //_cam = new Camera(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
+  _cam = _cam = new Camera(_grid->radius(), glm::vec3(0.0f, 0.0f, 0.0f));
   _timer->setInterval(10);
   connect(_timer,SIGNAL(timeout()),this,SLOT(updateGL()));
 }
@@ -307,7 +307,8 @@ void Viewer::drawHeight(GLuint id) {
 
 void Viewer::drawRendu(GLuint id){
      //mdv matrix from the light point of view
-    const float size = sqrt(2*pow(_grid->size(),2))/2.0;
+    //const float size = sqrt(2*pow(_grid->size(),2))/2.0;
+    const float size=_grid->radius();
     glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
     glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
     glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,1,0));
@@ -352,8 +353,8 @@ void Viewer::drawRendu(GLuint id){
 
 void Viewer::drawShadow(GLuint id) {
     // mdv matrix from the light point of view
-      //const float size = sqrt(2*pow(_grid->size(),2))/2.0;
-      const float size = sqrt(2);
+      //const float size = sqrt(2);
+      const float size = _grid->radius();
       glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
       glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
       glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,1,0));
