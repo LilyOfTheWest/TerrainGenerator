@@ -81,12 +81,12 @@ void main() {
    for(int i = 0; i < 16; i++) {
      color = color * texture(shadowMapTex,vec3(shadCoord.xy + poissonDisk[i]/300.0,(shadCoord.z-bias)/shadCoord.w));
    }
-   if(color != vec4(0.0,0.0,0.0,0.0))
-      bufferColor = color;
-  // Shadow with percentage closer filtering
-  // DECOMMENTER LA LIGNE SUIVANTE QUAND LE BLOC SHADOW MAP FONCTIONNE DANS VIEWER.CPP
 
-  // vec4 shadowColor = texture(shadowMapTex, vec3(shadCoord.xy, (shadCoord.z-bias)/shadCoord.w));
+  // Shadow with percentage closer filtering
+  //color = color*texture(shadowMapTex, vec3(shadCoord.xy, (shadCoord.z-bias)/shadCoord.w));
+
+  bufferColor = color;
+
   outHeight = height;
   outNormal=vec4(newNorm, 1.0);
 }

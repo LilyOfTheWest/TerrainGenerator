@@ -269,30 +269,6 @@ void Viewer::deleteShaders() {
   delete _showShadowMapShader; _showShadowMapShader = NULL;
 }
 
-void Viewer::drawSceneFromCamera(GLuint id) {
-  // mdv matrix from the light point of view 
-  const float size = sqrt(2*pow(_grid->size(),2))/2.0;
-  glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
-  glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
-  glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,1,0));
-  glm::mat4 m   = glm::mat4(1.0);
-  glm::mat4 mv  = v*m;
-
-  const glm::mat4 mvpDepth = p*mv;
-  glUniformMatrix4fv(glGetUniformLocation(id,"mvpDepthMat"),1,GL_FALSE,&mvpDepth[0][0]);
-
-  // send uniform variables 
-  glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));
-  glUniformMatrix3fv(glGetUniformLocation(id,"normalMat"),1,GL_FALSE,&(_cam->normalMatrix()[0][0]));
-  glUniform3fv(glGetUniformLocation(id,"light"),1,&(_light[0]));
-
-  const glm::mat4 mdv = _cam->mdvMatrix();
-  glUniformMatrix4fv(glGetUniformLocation(id,"mdvMat"),1,GL_FALSE,&(mdv[0][0]));
-
-  // disable VAO
-  glBindVertexArray(0);
-}
-
 void Viewer::drawTerrain(GLuint id) {
   // mdv matrix from the light point of view
 //  const float size = sqrt(2*pow(_grid->size(),2))/2.0;

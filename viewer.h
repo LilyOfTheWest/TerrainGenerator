@@ -51,7 +51,6 @@ class Viewer : public QGLWidget {
   void deleteFBO();
 
   // drawing functions 
-  void drawSceneFromCamera(GLuint id);
   void drawHeight(GLuint id);
   void drawTerrain(GLuint id);
   void drawShadow(GLuint id);
@@ -78,7 +77,7 @@ class Viewer : public QGLWidget {
   Shader *_renderingShader;
   Shader *_noiseShader;
   Shader *_normalShader;
-  Shader *_postProcessShader;
+  //Shader *_postProcessShader;
   Shader *_showShadowMapShader;
 
   GLuint _vaoTerrain;
