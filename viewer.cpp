@@ -515,7 +515,7 @@ void Viewer::paintGL() {
   glUseProgram(_renderingShader->id());
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glClearColor(0.5, 0.5, 0.5, 1);//gray color, same as fog color
+  //glClearColor(0.5, 0.5, 0.5, 1);//gray color, same as fog color
   glClearDepth(1);
   glDepthMask(GL_TRUE);
   glEnable(GL_DEPTH_TEST);

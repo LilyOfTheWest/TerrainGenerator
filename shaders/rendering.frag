@@ -92,11 +92,14 @@ void main() {
   //color = color*texture(shadowMapTex, vec3(shadCoord.xy, (shadCoord.z-bias)/shadCoord.w));
 
   // FOG
-  const vec4 fogColor = vec4(0.5,0.5,0.5,1.0);
+  const vec4 fogColor = vec4(0.0,0.0,0.0,1.0);
   const float fogDensity = 0.05;
   const float LOG2 = 1.442695;
   float z = gl_FragCoord.z / gl_FragCoord.w;
-  float fogFactor = exp2(-fogDensity*fogDensity*z*z*LOG2);
+  //float fogFactor = exp2(-fogDensity*fogDensity*z*z*LOG2);
+  float fogEnd = 6;
+  float fogStart = 2-sqrt(2);
+  float fogFactor = (fogEnd-z)/(fogEnd-fogStart);
   fogFactor = clamp(fogFactor, 0.0,1.0);
 
   //bufferColor = color;
