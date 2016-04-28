@@ -20,6 +20,7 @@ out vec3 normal;
 out vec4 height;
 out vec3 eyeView;
 out vec4 project_position;
+out vec4 viewspace;
 
 void main() {
   uvcoord     = position.xy*0.5+vec2(0.5);
@@ -34,6 +35,7 @@ void main() {
   tangentView = normalize(normalMat*tangent);
   height = vec4(newPos,1.0);
   eyeView     = normalize((mdvMat*vec4(newPos,1.0)).xyz);
+  viewspace = mdvMat*vec4(position,1);
   gl_Position = projMat*mdvMat*height;
   project_position = mvpDepthMat*vec4(newPos, 1.0);
 }

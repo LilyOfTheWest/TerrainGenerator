@@ -20,6 +20,7 @@ in  vec4  height;
 in  vec2  uvcoord;
 in  vec3  eyeView;
 in  vec4  project_position;
+in  vec4 viewspace;
 
 // used for the last question
 vec2 poissonDisk[16] = vec2[](
@@ -80,7 +81,7 @@ void main() {
   float spec = pow(max(dot(reflect(l,n),e),0.0),et);
 
   bufferColor = (diff*texColorMap);
-  //bufferColor = (diff*marron);
+
   vec4 color = bufferColor;
   // Shadow with soft shadows
    for(int i = 0; i < 16; i++) {
@@ -90,7 +91,16 @@ void main() {
   // Shadow with percentage closer filtering
   //color = color*texture(shadowMapTex, vec3(shadCoord.xy, (shadCoord.z-bias)/shadCoord.w));
 
-  bufferColor = color;
+  // FOG
+  const vec4 fogColor = vec4(0.5,0.5,0.5,1.0);
+  const float fogDensity = 0.05;
+  const float LOG2 = 1.442695;
+  float z = gl_FragCoord.z / gl_FragCoord.w;
+  float fogFactor = exp2(-fogDensity*fogDensity*z*z*LOG2);
+  fogFactor = clamp(fogFactor, 0.0,1.0);
+
+  //bufferColor = color;
+  bufferColor = mix(fogColor, color, fogFactor);
 
   outHeight = height;
   outNormal=vec4(newNorm, 1.0);

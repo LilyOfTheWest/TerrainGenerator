@@ -464,6 +464,7 @@ void Viewer::drawNormalMap(GLuint id) {
 void Viewer::paintGL() {
   /* Champ de hauteur */
   // on bind le premier fbo
+
   glBindFramebuffer(GL_FRAMEBUFFER,_fbo[0]);
 
   glDisable(GL_DEPTH_TEST);
@@ -492,11 +493,7 @@ void Viewer::paintGL() {
   glClear(GL_COLOR_BUFFER_BIT);
 
   drawTerrain(_normalShader->id());
-  //glBindFramebuffer(GL_FRAMEBUFFER,0);
-  // Rendering
-  //glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
-  // A commenter
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   glEnable(GL_DEPTH_TEST);
@@ -518,7 +515,10 @@ void Viewer::paintGL() {
   glUseProgram(_renderingShader->id());
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+  glClearColor(0.5, 0.5, 0.5, 1);//gray color, same as fog color
+  glClearDepth(1);
+  glDepthMask(GL_TRUE);
+  glEnable(GL_DEPTH_TEST);
   // On dessine le rendu
   drawRendu(_renderingShader->id());
 
