@@ -55,6 +55,8 @@ class Viewer : public QGLWidget {
   void drawTerrain(GLuint id);
   void drawShadow(GLuint id);
   void drawShadowMap(GLuint id);
+  void drawNormalMap(GLuint id);
+  void drawHeightMap(GLuint id);
   void drawRendu(GLuint id);
 
   void loadTexture(GLuint id,const char *filename);
@@ -72,6 +74,7 @@ class Viewer : public QGLWidget {
   bool      _mode;  // camera motion or light motion
   bool      _showShadowMap; // Permet d'afficher la shadow map
   bool      _showHeightMap; // Permet d'afficher le champ de hauteur
+  bool      _showNormalMap; // Permet d'afficher la map des normales
 
   Shader *_shadowMapShader;
   Shader *_renderingShader;
@@ -79,6 +82,8 @@ class Viewer : public QGLWidget {
   Shader *_normalShader;
   //Shader *_postProcessShader;
   Shader *_showShadowMapShader;
+  Shader *_showHeightMapShader;
+  Shader *_showNormalMapShader;
 
   GLuint _vaoTerrain;
   GLuint _vaoQuad;

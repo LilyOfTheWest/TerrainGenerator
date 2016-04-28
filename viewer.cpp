@@ -15,6 +15,8 @@ Viewer::Viewer(const QGLFormat &format)
     _move(glm::vec3(0,0,0)),
     _mode(false),
     _showShadowMap(false),
+    _showNormalMap(false),
+    _showHeightMap(false),
     _depthResol(512) {
 
   setlocale(LC_ALL,"C");
@@ -281,6 +283,8 @@ void Viewer::createShaders() {
 //  _postProcessShader = new Shader();
   _shadowMapShader = new Shader(); // will create the shadow map
   _showShadowMapShader = new Shader();
+  _showHeightMapShader = new Shader();
+  _showNormalMapShader = new Shader();
   _renderingShader = new Shader(); // render the scene, use shadow map
 
   _noiseShader->load("shaders/noise.vert", "shaders/noise.frag");
@@ -288,6 +292,8 @@ void Viewer::createShaders() {
 //  _postProcessShader->load("shaders/post-process.vert", "shaders/post-process.frag");
   _shadowMapShader->load("shaders/shadow-map.vert","shaders/shadow-map.frag");
   _showShadowMapShader->load("shaders/show-shadow-map.vert","shaders/show-shadow-map.frag");
+  _showHeightMapShader->load("shaders/show-height-map.vert","shaders/show-height-map.frag");
+  _showNormalMapShader->load("shaders/show-normal-map.vert","shaders/show-normal-map.frag");
   _renderingShader->load("shaders/rendering.vert","shaders/rendering.frag");
 }
 
@@ -299,6 +305,8 @@ void Viewer::deleteShaders() {
   delete _shadowMapShader; _shadowMapShader = NULL;
   delete _renderingShader; _renderingShader = NULL;
   delete _showShadowMapShader; _showShadowMapShader = NULL;
+  delete _showHeightMapShader; _showHeightMapShader = NULL;
+  delete _showNormalMapShader; _showNormalMapShader = NULL;
 }
 
 void Viewer::drawTerrain(GLuint id) {
@@ -425,6 +433,34 @@ void Viewer::drawShadowMap(GLuint id) {
   glBindVertexArray(0);
 }
 
+void Viewer::drawHeightMap(GLuint id) {
+  // send depth texture
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D,_texHeight);
+  glUniform1i(glGetUniformLocation(id,"heightmap"),0);
+
+  // draw the quad
+  glBindVertexArray(_vaoQuad);
+  glDrawArrays(GL_TRIANGLES,0,6);
+
+  // disable VAO
+  glBindVertexArray(0);
+}
+
+void Viewer::drawNormalMap(GLuint id) {
+  // send depth texture
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D,_texNormal);
+  glUniform1i(glGetUniformLocation(id,"normalmap"),0);
+
+  // draw the quad
+  glBindVertexArray(_vaoQuad);
+  glDrawArrays(GL_TRIANGLES,0,6);
+
+  // disable VAO
+  glBindVertexArray(0);
+}
+
 void Viewer::paintGL() {
   /* Champ de hauteur */
   // on bind le premier fbo
@@ -503,6 +539,30 @@ void Viewer::paintGL() {
 
       glEnable(GL_DEPTH_TEST);
       glDepthMask(GL_TRUE);
+    }
+
+  // Pour afficher la heightmap
+  if(_showHeightMap) {
+      // activate the test shader
+      glUseProgram(_showHeightMapShader->id());
+
+      // clear buffers
+//      glClear(GL_COLOR_BUFFER_BIT);
+
+      // display the shadow map
+      drawHeightMap(_showHeightMapShader->id());
+    }
+
+  // Pour afficher la normalmap
+  if(_showNormalMap) {
+      // activate the test shader
+      glUseProgram(_showNormalMapShader->id());
+
+      // clear buffers
+      glClear(GL_COLOR_BUFFER_BIT);
+
+      // display the shadow map
+      drawNormalMap(_showNormalMapShader->id());
     }
 
   // On désactive les shaders
@@ -615,17 +675,29 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
 //    _postProcessShader->reload("shaders/post-process.vert","shaders/post-process.frag");
     _shadowMapShader->reload("shaders/shadow-map.vert","shaders/shadow-map.frag");
     _showShadowMapShader->reload("shaders/show-shadow-map.vert","shaders/show-shadow-map.frag");
+    _showHeightMapShader->reload("shaders/show-height-map.vert","shaders/show-height-map.frag");
+    _showNormalMapShader->reload("shaders/show-normal-map.vert","shaders/show-normal-map.frag");
     _renderingShader->reload("shaders/rendering.vert","shaders/rendering.vert");
   }
 
   // key X: show height map
     if(ke->key()==Qt::Key_X) {
       _showHeightMap = !_showHeightMap;
+      if(_showNormalMap) _showNormalMap = !_showNormalMap;
+      if(_showShadowMap) _showShadowMap = !_showShadowMap;
     }
 
     // key W: show the shadow map
     if(ke->key()==Qt::Key_W) {
       _showShadowMap = !_showShadowMap;
+      if(_showNormalMap) _showNormalMap = !_showNormalMap;
+      if(_showHeightMap) _showHeightMap = !_showHeightMap;
+    }
+    // key C: show the normal map
+    if(ke->key()==Qt::Key_C) {
+      _showNormalMap = !_showNormalMap;
+      if(_showHeightMap) _showHeightMap = !_showHeightMap;
+      if(_showShadowMap) _showShadowMap = !_showShadowMap;
     }
 
   updateGL();
