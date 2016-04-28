@@ -502,8 +502,6 @@ void Viewer::paintGL() {
   glEnable(GL_DEPTH_TEST);
   glDepthMask(GL_TRUE);
 
-  // Shadow map TODO : DEBUG
-
   glBindFramebuffer(GL_FRAMEBUFFER, _fbo[2]);
 
   glDrawBuffer(GL_NONE);
@@ -524,30 +522,15 @@ void Viewer::paintGL() {
   // On dessine le rendu
   drawRendu(_renderingShader->id());
 
-  // Pour afficher la shadowmap
-  if(_showShadowMap) {
+  // Pour afficher la heightmap
+  if(_showHeightMap) {
       glDisable(GL_DEPTH_TEST);
       glDepthMask(GL_FALSE);
-      // activate the test shader
-      glUseProgram(_showShadowMapShader->id());
 
       // clear buffers
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-      // display the shadow map
-      drawShadowMap(_showShadowMapShader->id());
-
-      glEnable(GL_DEPTH_TEST);
-      glDepthMask(GL_TRUE);
-    }
-
-  // Pour afficher la heightmap
-  if(_showHeightMap) {
       // activate the test shader
       glUseProgram(_showHeightMapShader->id());
-
-      // clear buffers
-//      glClear(GL_COLOR_BUFFER_BIT);
 
       // display the shadow map
       drawHeightMap(_showHeightMapShader->id());
@@ -563,6 +546,23 @@ void Viewer::paintGL() {
 
       // display the shadow map
       drawNormalMap(_showNormalMapShader->id());
+    }
+
+  // Pour afficher la shadowmap
+  if(_showShadowMap) {
+      glDisable(GL_DEPTH_TEST);
+      glDepthMask(GL_FALSE);
+      // activate the test shader
+      glUseProgram(_showShadowMapShader->id());
+
+      // clear buffers
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+      // display the shadow map
+      drawShadowMap(_showShadowMapShader->id());
+
+      glEnable(GL_DEPTH_TEST);
+      glDepthMask(GL_TRUE);
     }
 
   // On désactive les shaders
