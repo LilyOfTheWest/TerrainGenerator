@@ -64,7 +64,6 @@ class Viewer : public QGLWidget {
   void deleteShaders();
 
   QTimer        *_timer;    // timer that controls the animation
-  unsigned int   _currentshader; // current shader index
 
   Grid *_grid;
   Camera *_cam;    // the camera

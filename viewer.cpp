@@ -10,7 +10,6 @@ using namespace std;
 Viewer::Viewer(const QGLFormat &format)
   : QGLWidget(format),
     _timer(new QTimer(this)),
-    _currentshader(0),
     _light(glm::vec3(0,0,1)),
     _move(glm::vec3(0,0,0)),
     _mode(false),
@@ -26,8 +25,7 @@ Viewer::Viewer(const QGLFormat &format)
   setlocale(LC_ALL,"C");
 
   _grid = new Grid();
-  //_depthResol = _grid->size();
-  //_cam = new Camera(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
+  // On se rapproche un peu plus de notre scène sinon on est dans le brouillard
   _cam = _cam = new Camera(/*_grid->radius()*/0.7f, glm::vec3(0.0f, 0.0f, 0.0f));
   _timer->setInterval(10);
   connect(_timer,SIGNAL(timeout()),this,SLOT(updateGL()));
@@ -47,8 +45,7 @@ Viewer::~Viewer() {
 
 void Viewer::deleteTextures() {
   // delete loaded textures 
-  //glDeleteTextures(2,_texColor);
-  //glDeleteTextures(2,_texNormal);
+  glDeleteTextures(6,_texColor);
 }
 
 void Viewer::deleteVAO() {
@@ -69,13 +66,14 @@ void Viewer::deleteFBO() {
   glDeleteTextures(1, &_texNormal);
   glDeleteTextures(1, &_texRendu);
   glDeleteTextures(1, &_texDepth);
+  deleteTextures();
 }
 
 void Viewer::createFBO() {
   // generate fbo and associated textures
     // Fbo de height map et normal map
     glGenFramebuffers(1, &_fbo[0]);
-    // Fbo de rendu
+    // Fbo de rendu : n'est pas utilisé
     glGenFramebuffers(1, &_fbo[1]);
     // Fbo de shadow map
     glGenFramebuffers(1, &_fbo[2]);
@@ -130,6 +128,7 @@ void Viewer::createFBO() {
     glBindTexture(GL_TEXTURE_2D,_texNormal);
     glFramebufferTexture2D(GL_FRAMEBUFFER_EXT,GL_COLOR_ATTACHMENT1,GL_TEXTURE_2D,_texNormal,0);
 
+    // Pour la texture de rendu : n'est pas utilisée
     glBindFramebuffer(GL_FRAMEBUFFER, _fbo[1]);
     glBindTexture(GL_TEXTURE_2D,_texRendu);
     glFramebufferTexture2D(GL_FRAMEBUFFER_EXT,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,_texRendu,0);
@@ -191,31 +190,6 @@ void Viewer::createTextures() {
     loadTexture(_texColor[3], "textures/water.jpg");
     loadTexture(_texColor[4], "textures/snow.jpg");
     loadTexture(_texColor[5], "textures/grass.jpg");
-
-//    // ------ activate this texture : colorImg
-//    glBindTexture(GL_TEXTURE_2D,_texColor);
-
-//    // texture sampling/filtering operation.
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-//    // transfer data from CPU to GPU memory
-//    glTexImage2D(
-//        GL_TEXTURE_2D,
-//        0,
-//        GL_RGBA32F,
-//        colorImg.width(),
-//        colorImg.height(),
-//        0,
-//        GL_RGBA,
-//        GL_UNSIGNED_BYTE,
-//        (const GLvoid *)colorImg.bits()
-//    );
-
-    // generate mipmaps
-//    glGenerateMipmap(GL_TEXTURE_2D);
 
 //    /**********************************
 //                1D Version
@@ -321,16 +295,7 @@ void Viewer::deleteShaders() {
 }
 
 void Viewer::drawTerrain(GLuint id) {
-  // mdv matrix from the light point of view
-//  const float size = sqrt(2*pow(_grid->size(),2))/2.0;
-//  glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
-//  glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
-//  glm::mat4 v   = glm::lookAt(l, glm::vec3(0,0,0), glm::vec3(0,1,0));
-//  glm::mat4 m   = glm::mat4(1.0);
-//  glm::mat4 mv  = v*m;
-
-//  const glm::mat4 mvpDepth = p*mv;
-//  glUniformMatrix4fv(glGetUniformLocation(id,"mvpDepthMat"),1,GL_FALSE,&mvpDepth[0][0]);
+  // On envoie la heightmap
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D,_texHeight);
   glUniform1i(glGetUniformLocation(id,"heightmap"),0);
@@ -344,7 +309,6 @@ void Viewer::drawTerrain(GLuint id) {
 }
 
 void Viewer::drawHeight(GLuint id) {
-
   // envoi du vecteur de mouvement
   glUniform3fv(glGetUniformLocation(id, "move"),1, &(_move[0]));
   glViewport(0, 0, _grid->size(),_grid->size());
@@ -358,7 +322,6 @@ void Viewer::drawHeight(GLuint id) {
 
 void Viewer::drawRendu(GLuint id){
      //mdv matrix from the light point of view
-    //const float size = sqrt(2*pow(_grid->size(),2))/2.0;
     const float size=_grid->radius();
     glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
     glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
@@ -428,6 +391,7 @@ void Viewer::drawRendu(GLuint id){
     glActiveTexture(GL_TEXTURE0+8);
     glBindTexture(GL_TEXTURE_2D, _texColor[5]);
     glUniform1i(glGetUniformLocation(id,"grass"),8);
+
 //    //1D
 //    glActiveTexture(GL_TEXTURE0+3);
 //    glBindTexture(GL_TEXTURE_1D, _texColor);
@@ -440,7 +404,6 @@ void Viewer::drawRendu(GLuint id){
 
 void Viewer::drawShadow(GLuint id) {
     // mdv matrix from the light point of view
-      //const float size = sqrt(2);
       const float size = _grid->radius();
       glm::vec3 l   = glm::transpose(_cam->normalMatrix())*_light;
       glm::mat4 p   = glm::ortho<float>(-size,size,-size,size,-size,2*size);
@@ -476,7 +439,7 @@ void Viewer::drawShadowMap(GLuint id) {
 }
 
 void Viewer::drawHeightMap(GLuint id) {
-  // send depth texture
+  // send height texture
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D,_texHeight);
   glUniform1i(glGetUniformLocation(id,"heightmap"),0);
@@ -490,7 +453,7 @@ void Viewer::drawHeightMap(GLuint id) {
 }
 
 void Viewer::drawNormalMap(GLuint id) {
-  // send depth texture
+  // send normal texture
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D,_texNormal);
   glUniform1i(glGetUniformLocation(id,"normalmap"),0);
@@ -506,7 +469,6 @@ void Viewer::drawNormalMap(GLuint id) {
 void Viewer::paintGL() {
   /* Champ de hauteur */
   // on bind le premier fbo
-
   glBindFramebuffer(GL_FRAMEBUFFER,_fbo[0]);
 
   glDisable(GL_DEPTH_TEST);
@@ -527,6 +489,8 @@ void Viewer::paintGL() {
   // On dessine la texture de bruit
   drawHeight(_noiseShader->id());
 
+  /* Normales */
+  // On dessine dans le deuxième buffer
   glDrawBuffer(GL_COLOR_ATTACHMENT1);
 
   // On active le shader des normales
@@ -534,19 +498,23 @@ void Viewer::paintGL() {
 
   glClear(GL_COLOR_BUFFER_BIT);
 
+  // On dessine la texture des normales
   drawTerrain(_normalShader->id());
 
+  // On désactive le fbo
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   glEnable(GL_DEPTH_TEST);
   glDepthMask(GL_TRUE);
 
+  // On bind le fbo pour la shadowmap
   glBindFramebuffer(GL_FRAMEBUFFER, _fbo[2]);
 
   glDrawBuffer(GL_NONE);
   glClear(GL_DEPTH_BUFFER_BIT);
   glUseProgram(_shadowMapShader->id());
   glViewport(0,0,_depthResol, _depthResol);
+  // On dessine la shadowmap
   drawShadow(_shadowMapShader->id());
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -557,7 +525,7 @@ void Viewer::paintGL() {
   glUseProgram(_renderingShader->id());
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glClearColor(1.0, 1.0, 1.0, 1);// white color same as fog color
+  glClearColor(1.0, 1.0, 1.0, 1);// couleur blanche comme celle du brouillard
   glClearDepth(1);
   glDepthMask(GL_TRUE);
   glEnable(GL_DEPTH_TEST);
