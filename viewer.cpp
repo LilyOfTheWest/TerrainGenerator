@@ -17,6 +17,10 @@ Viewer::Viewer(const QGLFormat &format)
     _showShadowMap(false),
     _showNormalMap(false),
     _showHeightMap(false),
+    _showFog(true),
+    _showShadow(true),
+    _showLight(true),
+    _useColorMap(true),
     _depthResol(512) {
 
   setlocale(LC_ALL,"C");
@@ -24,7 +28,7 @@ Viewer::Viewer(const QGLFormat &format)
   _grid = new Grid();
   //_depthResol = _grid->size();
   //_cam = new Camera(1.0f, glm::vec3(0.0f, 0.0f, 0.0f));
-  _cam = _cam = new Camera(_grid->radius(), glm::vec3(0.0f, 0.0f, 0.0f));
+  _cam = _cam = new Camera(/*_grid->radius()*/0.7f, glm::vec3(0.0f, 0.0f, 0.0f));
   _timer->setInterval(10);
   connect(_timer,SIGNAL(timeout()),this,SLOT(updateGL()));
 }
@@ -152,12 +156,14 @@ void Viewer::loadTexture(GLuint id,const char *filename) {
   
   // set texture parameters 
   glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR); 
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_MIRRORED_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_MIRRORED_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+  if(id == _texColor[0])
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  else glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
   
   // store texture in the GPU
-  glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,image.width(),image.height(),0,
+  glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA32F,image.width(),image.height(),0,
   	       GL_RGBA,GL_UNSIGNED_BYTE,(const GLvoid *)image.bits());
   
   // generate mipmaps 
@@ -165,8 +171,8 @@ void Viewer::loadTexture(GLuint id,const char *filename) {
 }
 
 void Viewer::createTextures() {
-
-    QImage colorImg;
+    _nbTextures = 6;
+    _texColor  = new GLuint[_nbTextures];
 
     /**********************************
                 2D Version
@@ -175,36 +181,41 @@ void Viewer::createTextures() {
     // enable the use of 1D textures
     glEnable(GL_TEXTURE_2D);
 
-    // create one texture on the GPU
-    glGenTextures(1,&_texColor);
+    // create textures on the GPU
+    glGenTextures(_nbTextures,_texColor);
 
-    // load an image (CPU side)
-    colorImg = QGLWidget::convertToGLFormat(QImage("textures/2DcolorTex.png"));
+    // load images (CPU side)
+    loadTexture(_texColor[0], "textures/2DcolorTexv2.png");
+    loadTexture(_texColor[1], "textures/rock.jpg");
+    loadTexture(_texColor[2], "textures/sand.jpg");
+    loadTexture(_texColor[3], "textures/water.jpg");
+    loadTexture(_texColor[4], "textures/snow.jpg");
+    loadTexture(_texColor[5], "textures/grass.jpg");
 
-    // ------ activate this texture : colorImg
-    glBindTexture(GL_TEXTURE_2D,_texColor);
+//    // ------ activate this texture : colorImg
+//    glBindTexture(GL_TEXTURE_2D,_texColor);
 
-    // texture sampling/filtering operation.
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//    // texture sampling/filtering operation.
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-    // transfer data from CPU to GPU memory
-    glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_RGBA32F,
-        colorImg.width(),
-        colorImg.height(),
-        0,
-        GL_RGBA,
-        GL_UNSIGNED_BYTE,
-        (const GLvoid *)colorImg.bits()
-    );
+//    // transfer data from CPU to GPU memory
+//    glTexImage2D(
+//        GL_TEXTURE_2D,
+//        0,
+//        GL_RGBA32F,
+//        colorImg.width(),
+//        colorImg.height(),
+//        0,
+//        GL_RGBA,
+//        GL_UNSIGNED_BYTE,
+//        (const GLvoid *)colorImg.bits()
+//    );
 
     // generate mipmaps
-    glGenerateMipmap(GL_TEXTURE_2D);
+//    glGenerateMipmap(GL_TEXTURE_2D);
 
 //    /**********************************
 //                1D Version
@@ -366,6 +377,12 @@ void Viewer::drawRendu(GLuint id){
     const glm::mat4 mdv = _cam->mdvMatrix();
     glUniformMatrix4fv(glGetUniformLocation(id,"mdvMat"),1,GL_FALSE,&(mdv[0][0]));
 
+    // Envoi des bool sur le brouillard, les ombres et la lumière
+    glUniform1i(glGetUniformLocation(id,"showFog"), _showFog);
+    glUniform1i(glGetUniformLocation(id,"showLight"), _showLight);
+    glUniform1i(glGetUniformLocation(id,"showShadow"), _showShadow);
+    glUniform1i(glGetUniformLocation(id,"useColorMap"), _useColorMap);
+
     // send height texture
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D,_texHeight);
@@ -382,10 +399,35 @@ void Viewer::drawRendu(GLuint id){
     glUniform1i(glGetUniformLocation(id, "shadowMapTex"), 2);
 
     // send color texture
-    //2D
+    //2D colormap
     glActiveTexture(GL_TEXTURE0+3);
-    glBindTexture(GL_TEXTURE_2D, _texColor);
+    glBindTexture(GL_TEXTURE_2D, _texColor[0]);
     glUniform1i(glGetUniformLocation(id,"colormap"),3);
+
+    // rock
+    glActiveTexture(GL_TEXTURE0+4);
+    glBindTexture(GL_TEXTURE_2D, _texColor[1]);
+    glUniform1i(glGetUniformLocation(id,"rock"),4);
+
+    // sand
+    glActiveTexture(GL_TEXTURE0+5);
+    glBindTexture(GL_TEXTURE_2D, _texColor[2]);
+    glUniform1i(glGetUniformLocation(id,"sand"),5);
+
+    // water
+    glActiveTexture(GL_TEXTURE0+6);
+    glBindTexture(GL_TEXTURE_2D, _texColor[3]);
+    glUniform1i(glGetUniformLocation(id,"water"),6);
+
+    // snow
+    glActiveTexture(GL_TEXTURE0+7);
+    glBindTexture(GL_TEXTURE_2D, _texColor[4]);
+    glUniform1i(glGetUniformLocation(id,"snow"),7);
+
+    // grass
+    glActiveTexture(GL_TEXTURE0+8);
+    glBindTexture(GL_TEXTURE_2D, _texColor[5]);
+    glUniform1i(glGetUniformLocation(id,"grass"),8);
 //    //1D
 //    glActiveTexture(GL_TEXTURE0+3);
 //    glBindTexture(GL_TEXTURE_1D, _texColor);
@@ -670,14 +712,6 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
 
   // key r: reload shaders 
   if(ke->key()==Qt::Key_R) {
-    _noiseShader->reload("shaders/noise.vert","shaders/noise.frag");
-    _normalShader->reload("shaders/normal.vert","shaders/normal.frag");
-//    _postProcessShader->reload("shaders/post-process.vert","shaders/post-process.frag");
-    _shadowMapShader->reload("shaders/shadow-map.vert","shaders/shadow-map.frag");
-    _showShadowMapShader->reload("shaders/show-shadow-map.vert","shaders/show-shadow-map.frag");
-    _showHeightMapShader->reload("shaders/show-height-map.vert","shaders/show-height-map.frag");
-    _showNormalMapShader->reload("shaders/show-normal-map.vert","shaders/show-normal-map.frag");
-    _renderingShader->reload("shaders/rendering.vert","shaders/rendering.vert");
   }
 
   // key X: show height map
@@ -700,6 +734,26 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
       if(_showShadowMap) _showShadowMap = !_showShadowMap;
     }
 
+    // Key B : afficher le brouillard
+    if(ke->key()==Qt::Key_B){
+        _showFog = !_showFog;
+        // Envoi du booléen concernant le brouillard
+    }
+
+    // Key L : afficher la lumière
+    if(ke->key()==Qt::Key_L){
+        _showLight = !_showLight;
+    }
+
+    // Key G : afficher les ombres
+    if(ke->key()==Qt::Key_G){
+        _showShadow = !_showShadow;
+    }
+
+    // Key T : utiliser la colormap ou les textures individuelles
+    if(ke->key()==Qt::Key_T){
+        _useColorMap = !_useColorMap;
+    }
   updateGL();
 }
 

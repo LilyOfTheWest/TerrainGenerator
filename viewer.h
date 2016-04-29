@@ -75,6 +75,10 @@ class Viewer : public QGLWidget {
   bool      _showShadowMap; // Permet d'afficher la shadow map
   bool      _showHeightMap; // Permet d'afficher le champ de hauteur
   bool      _showNormalMap; // Permet d'afficher la map des normales
+  bool      _showFog;   // Permet d'afficher ou non le brouillard
+  bool      _showShadow; // Permet d'afficher ou non les ombres
+  bool      _showLight; // Permet d'afficher ou non la lumière
+  bool      _useColorMap; // Permet d'utiliser la colormap 2D à la place des textures individuelles
 
   Shader *_shadowMapShader;
   Shader *_renderingShader;
@@ -96,8 +100,9 @@ class Viewer : public QGLWidget {
   GLuint _texNormal;
   GLuint _texRendu;
   GLuint _texDepth;
-  GLuint _texColor;
+  GLuint *_texColor;
   unsigned int _depthResol;
+  unsigned int _nbTextures;
 };
 
 #endif // VIEWER_H

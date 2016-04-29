@@ -5,6 +5,15 @@ layout(location = 1) out vec4 outHeight;
 layout(location = 2) out vec4 outNormal;
 
 uniform sampler2D normalmap;
+uniform sampler2D snow;
+uniform sampler2D rock;
+uniform sampler2D water;
+uniform sampler2D sand;
+uniform sampler2D grass;
+uniform bool showFog;
+uniform bool showLight;
+uniform bool showShadow;
+uniform bool useColorMap;
 uniform sampler2DShadow shadowMapTex;
 //2D
 uniform sampler2D colormap;
@@ -60,12 +69,51 @@ void main() {
   vec4 shadCoord = project_position*0.5+0.5;
   float bias = 0.015;
 
-  //2D
-  vec2 pickColor = vec2(0.5+height.z, height.x);
-  //1D
-  //float pickColor = 0.4+height.z; //TODO : peut mieux faire pour le calcul de la coordonée ?
-  vec4 texColorMap = texture(colormap,pickColor);
-  if(texColorMap == vec4(0.0,0.0,0.0,0.0)) texColorMap = vec4(0.0,0.0,1.0,1.0);
+  // Texture color computing
+  float hZ = height.z;
+  float hX = height.x;
+  float hY = height.y;
+
+  float heightTex = 1.0f - hZ;
+
+  vec2 texCoords = vec2(hX, hY);
+  vec4 texColor = vec4(1.0f);
+
+  if(!useColorMap){
+    // Choix texture
+    // neige
+    if(heightTex > 1.3f){
+      texColor = texColor * texture(snow, texCoords);
+    }
+    // roche
+    else if(heightTex > 0.75f){
+      texColor = texColor * texture(rock, texCoords);
+    }
+    // herbe
+    else if(heightTex > 0.60f){
+      texColor = texture(grass, texCoords);
+    }
+    // sable
+    else if(heightTex > 0.55f){
+      texColor = texture(sand, texCoords);
+    }
+    // eau
+    else{
+      texColor = texture(water, texCoords);
+    }
+  }
+  else{
+    //2D colormap
+    vec2 pickColor = vec2(0.5+hZ, hX*0.5+0.5);
+    //1D
+    //float pickColor = 0.4+height.z; //TODO : peut mieux faire pour le calcul de la coordonée ?
+    if(heightTex > 1.7f)
+      texColor = texture(snow, texCoords);
+    else if(heightTex <= 0.55f)
+      texColor = texture(water, texCoords);
+    else
+      texColor = texture(colormap,pickColor);
+  }
 
 //  vec3 newNorm = normalize(tbn*normal);
 
@@ -80,16 +128,22 @@ void main() {
   float diff = max(dot(l,n),0.);
   float spec = pow(max(dot(reflect(l,n),e),0.0),et);
 
-  bufferColor = (diff*texColorMap);
+  if(showLight)
+    bufferColor = (diff*texColor);
+  else bufferColor = texColor;
 
   vec4 color = bufferColor;
-  // Shadow with soft shadows
-   for(int i = 0; i < 16; i++) {
-     color = color * texture(shadowMapTex,vec3(shadCoord.xy + poissonDisk[i]/300.0,(shadCoord.z-bias)/shadCoord.w));
-   }
+  if(showShadow){
+    // Shadow with soft shadows
+     for(int i = 0; i < 16; i++) {
+       color = color * texture(shadowMapTex,vec3(shadCoord.xy + poissonDisk[i]/300.0,(shadCoord.z-bias)/shadCoord.w));
+     }
 
-  // Shadow with percentage closer filtering
-  //color = color*texture(shadowMapTex, vec3(shadCoord.xy, (shadCoord.z-bias)/shadCoord.w));
+
+    // Shadow with percentage closer filtering
+    //color = color*texture(shadowMapTex, vec3(shadCoord.xy, (shadCoord.z-bias)/shadCoord.w));
+  }
+
 
   // FOG
   const vec4 fogColor = vec4(0.0,0.0,0.0,1.0);
@@ -97,13 +151,14 @@ void main() {
   const float LOG2 = 1.442695;
   float z = gl_FragCoord.z / gl_FragCoord.w;
   //float fogFactor = exp2(-fogDensity*fogDensity*z*z*LOG2);
-  float fogEnd = 6;
-  float fogStart = 2-sqrt(2);
+  float fogEnd = 3;
+  float fogStart = 0;
   float fogFactor = (fogEnd-z)/(fogEnd-fogStart);
   fogFactor = clamp(fogFactor, 0.0,1.0);
 
-  //bufferColor = color;
-  bufferColor = mix(fogColor, color, fogFactor);
+  if(!showFog)
+    bufferColor = color;
+  else bufferColor = mix(fogColor, color, fogFactor);
 
   outHeight = height;
   outNormal=vec4(newNorm, 1.0);

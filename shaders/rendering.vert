@@ -35,7 +35,10 @@ void main() {
   tangentView = normalize(normalMat*tangent);
   height = vec4(newPos,1.0);
   eyeView     = normalize((mdvMat*vec4(newPos,1.0)).xyz);
+  float heightTex = 1.0f - height.z;
   viewspace = mdvMat*vec4(position,1);
+  if(heightTex <= 0.50)
+    height.z = 0.50;
   gl_Position = projMat*mdvMat*height;
   project_position = mvpDepthMat*vec4(newPos, 1.0);
 }
