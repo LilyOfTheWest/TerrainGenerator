@@ -31,7 +31,7 @@ in  vec3  eyeView;
 in  vec4  project_position;
 in  vec4 viewspace;
 
-// used for the last question
+// used for shadows
 vec2 poissonDisk[16] = vec2[](
    vec2( -0.94201624, -0.39906216 ),
    vec2( 0.94558609, -0.76890725 ),
@@ -51,7 +51,7 @@ vec2 poissonDisk[16] = vec2[](
    vec2( 0.14383161, -0.14100790 )
 );
 
-// used for the last question
+// used for shadows
 float random(vec3 seed, int i){
   vec4 seed4 = vec4(seed,i);
   float dot_product = dot(seed4, vec4(12.9898,78.233,45.164,94.673));
@@ -144,15 +144,14 @@ void main() {
     //color = color*texture(shadowMapTex, vec3(shadCoord.xy, (shadCoord.z-bias)/shadCoord.w));
   }
 
-
   // FOG
-  const vec4 fogColor = vec4(0.0,0.0,0.0,1.0);
+  const vec4 fogColor = vec4(1.0,1.0,1.0,1.0);
   const float fogDensity = 0.05;
   const float LOG2 = 1.442695;
   float z = gl_FragCoord.z / gl_FragCoord.w;
   //float fogFactor = exp2(-fogDensity*fogDensity*z*z*LOG2);
   float fogEnd = 3;
-  float fogStart = 0;
+  float fogStart = 1.25;
   float fogFactor = (fogEnd-z)/(fogEnd-fogStart);
   fogFactor = clamp(fogFactor, 0.0,1.0);
 
