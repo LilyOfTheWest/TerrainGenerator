@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2016.2.11)  29 APR 2016 14:53
+This is pdfTeX, Version 3.1415926-2.5-1.40.14 (TeX Live 2013/Debian) (format=pdflatex 2016.2.11)  29 APR 2016 15:17
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -755,69 +755,69 @@ File: screen8.png Graphic file (type png)
 Package pdftex.def Info: screen8.png used on input line 200.
 (pdftex.def)             Requested size: 192.72148pt x 144.5411pt.
 
-<screen6.png, id=39, 642.4pt x 481.8pt>
+<screen6.png, id=39, 513.92pt x 481.8pt>
 File: screen6.png Graphic file (type png)
  <use screen6.png>
 Package pdftex.def Info: screen6.png used on input line 208.
-(pdftex.def)             Requested size: 192.72148pt x 144.5411pt.
- [7 <./screen8.png> <./screen6.png>] <screen9.png, id=44, 642.4pt x 481.8pt>
+(pdftex.def)             Requested size: 205.56435pt x 192.71658pt.
+ [7 <./screen8.png> <./screen6.png>] <screen9.png, id=46, 642.4pt x 481.8pt>
 File: screen9.png Graphic file (type png)
  <use screen9.png>
 Package pdftex.def Info: screen9.png used on input line 218.
 (pdftex.def)             Requested size: 192.72148pt x 144.5411pt.
 
-<screen10.png, id=45, 642.4pt x 481.8pt>
+<screen10.png, id=47, 642.4pt x 481.8pt>
 File: screen10.png Graphic file (type png)
  <use screen10.png>
 Package pdftex.def Info: screen10.png used on input line 226.
 (pdftex.def)             Requested size: 192.72148pt x 144.5411pt.
 
-<../textures/1DcolorTex.png, id=46, 36.135pt x 0.36134pt>
+<../textures/1DcolorTex.png, id=48, 36.135pt x 0.36134pt>
 File: ../textures/1DcolorTex.png Graphic file (type png)
 
 <use ../textures/1DcolorTex.png>
 Package pdftex.def Info: ../textures/1DcolorTex.png used on input line 237.
 (pdftex.def)             Requested size: 433.61865pt x 4.33594pt.
  [8 <./screen9.png> <./screen10.png> <../textures/1DcolorTex.png>] <../textures
-/2DcolorTex.png, id=52, 803.0pt x 238.8925pt>
+/2DcolorTex.png, id=53, 803.0pt x 238.8925pt>
 File: ../textures/2DcolorTex.png Graphic file (type png)
 
 <use ../textures/2DcolorTex.png>
 Package pdftex.def Info: ../textures/2DcolorTex.png used on input line 246.
 (pdftex.def)             Requested size: 240.90186pt x 71.66829pt.
 
-<../textures/2DcolorTexv2.png, id=53, 803.0pt x 256.96pt>
+<../textures/2DcolorTexv2.png, id=54, 803.0pt x 256.96pt>
 File: ../textures/2DcolorTexv2.png Graphic file (type png)
 
 <use ../textures/2DcolorTexv2.png>
 Package pdftex.def Info: ../textures/2DcolorTexv2.png used on input line 255.
 (pdftex.def)             Requested size: 240.90186pt x 77.0886pt.
 
-<../textures/snow.jpg, id=54, 256.96pt x 256.96pt>
+<../textures/snow.jpg, id=55, 256.96pt x 256.96pt>
 File: ../textures/snow.jpg Graphic file (type jpg)
  <use ../textures/snow.jpg>
 Package pdftex.def Info: ../textures/snow.jpg used on input line 262.
 (pdftex.def)             Requested size: 51.39108pt x 51.39108pt.
 
-<../textures/rock.jpg, id=55, 256.96pt x 256.96pt>
+<../textures/rock.jpg, id=56, 256.96pt x 256.96pt>
 File: ../textures/rock.jpg Graphic file (type jpg)
  <use ../textures/rock.jpg>
 Package pdftex.def Info: ../textures/rock.jpg used on input line 267.
 (pdftex.def)             Requested size: 51.39108pt x 51.39108pt.
 
-<../textures/grass.jpg, id=56, 256.96pt x 256.96pt>
+<../textures/grass.jpg, id=57, 256.96pt x 256.96pt>
 File: ../textures/grass.jpg Graphic file (type jpg)
 
 <use ../textures/grass.jpg>
 Package pdftex.def Info: ../textures/grass.jpg used on input line 272.
 (pdftex.def)             Requested size: 51.39108pt x 51.39108pt.
- <../textures/sand.jpg, id=57, 256.96pt x 256.96pt>
+ <../textures/sand.jpg, id=58, 256.96pt x 256.96pt>
 File: ../textures/sand.jpg Graphic file (type jpg)
 
 <use ../textures/sand.jpg>
 Package pdftex.def Info: ../textures/sand.jpg used on input line 277.
 (pdftex.def)             Requested size: 51.39108pt x 51.39108pt.
- <../textures/water.jpg, id=58, 256.96pt x 256.96pt>
+ <../textures/water.jpg, id=59, 256.96pt x 256.96pt>
 File: ../textures/water.jpg Graphic file (type jpg)
 
 <use ../textures/water.jpg>
@@ -864,10 +864,10 @@ ublic/cm-super/sfbx1728.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfcc1
 texmf/fonts/type1/public/cm-super/sfrm1000.pfb></usr/share/texmf/fonts/type1/pu
 blic/cm-super/sfrm1200.pfb></usr/share/texmf/fonts/type1/public/cm-super/sfrm17
 28.pfb>
-Output written on Rapport_SIM_TP09_POUVARET_TURNEL_THEBAUD.pdf (10 pages, 49153
-93 bytes).
+Output written on Rapport_SIM_TP09_POUVARET_TURNEL_THEBAUD.pdf (10 pages, 49371
+79 bytes).
 PDF statistics:
- 101 PDF objects out of 1000 (max. 8388607)
+ 102 PDF objects out of 1000 (max. 8388607)
  56 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  96 words of extra memory for PDF output out of 10000 (max. 10000000)

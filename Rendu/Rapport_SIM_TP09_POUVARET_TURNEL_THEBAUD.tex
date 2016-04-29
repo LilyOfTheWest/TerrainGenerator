@@ -47,7 +47,7 @@ On envoie au vertex shader également le vecteur de mouvement qui va nous permet
 
 Le bruit ainsi généré est produit dans une texture de la taille de la grille du terrain que l'on dessine dans un fbo.\\
 
-\subsection*{Deuxième passe : normales}
+\subsection{Deuxième passe : normales}
 
 Celle-ci sert à générer la map des normales des sommets en utilisant d'autres shaders (normal.vert, normal.frag).
 
@@ -55,17 +55,17 @@ Le fragment shader se sert bien évidemment de la map de hauteur générée pré
 
 Encore une fois, elle est générée dans une texture dessinée dans le même fbo.\\
 
-\subsection*{Troisième passe : shadow map}
+\subsection{Troisième passe : shadow map}
 Après cela, nous avons une passe à part pour générer la shadow map de notre rendu dessinée dans un autre fbo (shadow-map.vert, shadow-map.frag).
 
 Dans le vertex shader, nous mettons à jour la position des sommets selon l'espace de lumière (matrice de modèle-vue-projection) et on ne fait rien dans le fragment shader.
 
 Nous utilisons des soft shadows avec la Loi de Poisson pour générer nos ombres.\\
 
-\subsection*{Quatrième passe : rendu}
+\subsection{Quatrième passe : rendu}
 Enfin, on rend notre scène en réalisant un displacement mapping selon le champ de hauteur généré. (rendering.vert)
 
-\subsection*{Cinquième passe : post-process}
+\subsection{Cinquième passe : post-process}
 
 On ajoute un Phong shading dans le fragment shader pour la lumière (en utilisant la normal map) ainsi que nos ombres projetées grâce à la shadowmap. (rendering.frag)\\
 
@@ -205,7 +205,7 @@ Et enfin, si on désactive les trois, on obtient cette vue (beaucoup moins agré
 
 \begin{figure}[h]
 	\center
-	\includegraphics[scale=0.30]{screen6.png}
+	\includegraphics[scale=0.40]{screen6.png}
 	\caption{shadow map}
 \end{figure}
 \newpage
@@ -280,7 +280,7 @@ Voici la version utilisée actuellement de texture colormap :
 \begin{minipage}[c]{0.46\linewidth}
 \center
 \includegraphics[scale=0.2]{../textures/water.jpg}
-\captionof{figure}{water}
+\captionof{figure}{Eau}
 \end{minipage}\hfill
 
 \section{Problèmes et améliorations}
